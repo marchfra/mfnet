@@ -4,7 +4,7 @@ from pytest import approx, raises
 from mfnet.layer import LeakyReLU, ReLU, Sigmoid, Tanh
 
 
-def test_failure() -> None:
+def test_fail() -> None:
     """Test failure."""
     assert False
 
