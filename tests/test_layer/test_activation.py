@@ -4,11 +4,6 @@ from pytest import approx, raises
 from mfnet.layer import LeakyReLU, ReLU, Sigmoid, Tanh
 
 
-def test_fail() -> None:
-    """Test failure."""
-    assert False
-
-
 def test_tanh_forward() -> None:
     """Test Tanh layer's forward method."""
     tanh = Tanh()
