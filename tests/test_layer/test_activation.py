@@ -1,5 +1,5 @@
 import numpy as np
-from pytest import approx, raises
+from pytest import approx
 
 from mfnet.layer import LeakyReLU, ReLU, Sigmoid, Tanh
 
@@ -15,8 +15,10 @@ def test_tanh_forward() -> None:
 def test_tanh_backward() -> None:
     """Test Tanh layer's backward method."""
     tanh = Tanh()
-    with raises(NotImplementedError):
-        tanh.backward(np.array([1, 2, 3]))
+    tanh.forward(np.array([1, 2]))
+    grad = np.array([0.5, 1])
+    expected = np.array([0.2099871708, 0.0706508244])
+    assert tanh.backward(grad) == approx(expected)
 
 
 def test_sigmoid_forward() -> None:
@@ -30,8 +32,10 @@ def test_sigmoid_forward() -> None:
 def test_sigmoid_backward() -> None:
     """Test Sigmoid layer's backward method."""
     sigmoid = Sigmoid()
-    with raises(NotImplementedError):
-        sigmoid.backward(np.array([1, 2, 3]))
+    sigmoid.forward(np.array([1, 2]))
+    grad = np.array([0.5, 1])
+    expected = np.array([0.0983059666207, 0.104993585404])
+    assert sigmoid.backward(grad) == approx(expected)
 
 
 def test_relu_forward() -> None:
@@ -45,20 +49,24 @@ def test_relu_forward() -> None:
 def test_relu_backward() -> None:
     """Test ReLU layer's backward method."""
     relu = ReLU()
-    with raises(NotImplementedError):
-        relu.backward(np.array([1, 2, 3]))
+    relu.forward(np.array([-1, 1]))
+    grad = np.array([0.5, 1])
+    expected = np.array([0, 1])
+    assert relu.backward(grad) == approx(expected)
 
 
 def test_leaky_relu_forward() -> None:
     """Test LeakyReLU layer's forward method."""
     leaky_relu = LeakyReLU()
     x = np.array([-1, 0, 1])
-    expected = np.array([-0.1, 0, 1])
+    expected = np.array([-0.01, 0, 1])
     assert leaky_relu.forward(x) == approx(expected)
 
 
 def test_leaky_relu_backward() -> None:
     """Test LeakyReLU layer's backward method."""
     leaky_relu = LeakyReLU()
-    with raises(NotImplementedError):
-        leaky_relu.backward(np.array([1, 2, 3]))
+    leaky_relu.forward(np.array([-1, 1]))
+    grad = np.array([0.5, 1])
+    expected = np.array([0.005, 1])
+    assert leaky_relu.backward(grad) == approx(expected)

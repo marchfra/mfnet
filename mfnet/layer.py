@@ -46,13 +46,15 @@ class Activation:
     def __init__(self, g: ActivationFunction, g_prime: ActivationFunction) -> None:
         self.g = g
         self.g_prime = g_prime
+        self.inputs: Tensor
 
     def forward(self, inputs: Tensor) -> Tensor:
         """Apply the activation function elementwise to the input tensor."""
+        self.inputs = inputs
         return self.g(inputs)
 
     def backward(self, grad: Tensor) -> Tensor:
-        raise NotImplementedError
+        return grad * self.g_prime(self.inputs)
 
 
 def tanh(x: Tensor) -> Tensor:
@@ -103,11 +105,11 @@ class ReLU(Activation):
 
 
 def leaky_relu(x: Tensor) -> Tensor:
-    return np.maximum(0.1 * x, x)
+    return np.maximum(0.01 * x, x)
 
 
 def leaky_relu_prime(x: Tensor) -> Tensor:
-    return np.where(x > 0, 1, 0.1)
+    return np.where(x > 0, 1, 0.01)
 
 
 class LeakyReLU(Activation):
