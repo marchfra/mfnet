@@ -23,7 +23,7 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-ra -q --cov=mfnet"
+addopts = "-ra -q --cov=mfnet --cov-report=html"
 testpaths = ["tests"]
 
 [tool.pyright]
