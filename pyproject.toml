@@ -1,0 +1,49 @@
+[project]
+name = "mfnet"
+version = "0.1.0"
+description = "Simple machine learning library."
+readme = "README.md"
+authors = [
+    { name = "Francesco Marchisotti", email = "francesco.marchisotti@gmail.com" }
+]
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.8.8,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra -q --cov=mfnet --cov-report=html"
+testpaths = ["tests"]
+
+[tool.pyright]
+exclude = [".venv"]
+pythonVersion = "3.13"
+venvPath = "."
+venv = ".venv"
+
+[tool.ruff]
+extend = "~/.config/ruff/ruff.toml"
+
+[tool.ruff.lint]
+ignore = [
+    "G004",  # logging-f-string
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",  # Ignore use of assert in tests
+    "ARG",   # flake8-unused-arguments
+    "FBT",   # flake8-boolean-trap
+    "PLR2004",  # magic-value-comparison
+    "S311",  # suspiciuous-non-cryptographic-random-usage
+    "SLF001",  # Private member accessed
+]
