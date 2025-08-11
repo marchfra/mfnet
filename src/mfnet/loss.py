@@ -22,23 +22,43 @@ class Loss(ABC):
     def grad(self, pred: Tensor, target: Tensor) -> Tensor:
         """Compute the gradient of the loss with respect to the predicted tensor."""
 
-    def __call__(self, pred: Tensor, target: Tensor) -> float64:
-        """Compute the loss between the predicted and target tensors."""
-        return self.loss(pred, target)
-
 
 class MSELoss(Loss):
     """Mean Squared Error (MSE) loss implementation."""
 
     def loss(self, pred: Tensor, target: Tensor) -> float64:
-        """Compute the MSE loss between the prediction and target."""
+        """Compute the MSE loss between the predicted and target tensors.
+
+        Args:
+            pred (Tensor): The predicted tensor.
+            target (Tensor): The ground truth tensor.
+
+        Returns:
+            float64: The computed MSE loss value.
+
+        Raises:
+            ValueError: If the shapes of `pred` and `target` do not match.
+
+        """
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
         return ((pred - target) ** 2).mean()
 
     def grad(self, pred: Tensor, target: Tensor) -> Tensor:
-        """Compute the gradient of the MSE loss with respect to the predictions."""
+        """Compute the gradient of the MSE loss with respect to the predicted tensor.
+
+        Args:
+            pred (Tensor): The predicted values.
+            target (Tensor): The ground truth target values.
+
+        Returns:
+            Tensor: The gradient of the MSE loss with respect to the predictions.
+
+        Raises:
+            ValueError: If the shapes of `pred` and `target` do not match.
+
+        """
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
