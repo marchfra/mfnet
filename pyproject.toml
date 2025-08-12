@@ -22,9 +22,6 @@ dev = [
     "pytest-cov>=6.2.1",
 ]
 
-[project.scripts]
-layer = "mfnet.layer:main"
-
 [tool.pytest.ini_options]
 addopts = "-ra -q --cov=mfnet --cov-report=html"
 testpaths = ["tests"]
