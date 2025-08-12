@@ -14,19 +14,22 @@ class Loss(ABC):
     loss with respect to the predicted tensor.
     """
 
+    @staticmethod
     @abstractmethod
-    def loss(self, pred: Tensor, target: Tensor) -> float64:
+    def loss(pred: Tensor, target: Tensor) -> float64:
         """Compute the loss between predicted and target tensors."""
 
+    @staticmethod
     @abstractmethod
-    def grad(self, pred: Tensor, target: Tensor) -> Tensor:
+    def grad(pred: Tensor, target: Tensor) -> Tensor:
         """Compute the gradient of the loss with respect to the predicted tensor."""
 
 
 class MSELoss(Loss):
     """Mean Squared Error (MSE) loss implementation."""
 
-    def loss(self, pred: Tensor, target: Tensor) -> float64:
+    @staticmethod
+    def loss(pred: Tensor, target: Tensor) -> float64:
         """Compute the MSE loss between the predicted and target tensors.
 
         Args:
@@ -45,7 +48,8 @@ class MSELoss(Loss):
 
         return ((pred - target) ** 2).mean()
 
-    def grad(self, pred: Tensor, target: Tensor) -> Tensor:
+    @staticmethod
+    def grad(pred: Tensor, target: Tensor) -> Tensor:
         """Compute the gradient of the MSE loss with respect to the predicted tensor.
 
         Args:
