@@ -37,11 +37,6 @@ class Layer(ABC):
     def backward(self, grad: Tensor) -> Tensor:
         """Perform the backward pass for the layer."""
 
-        # ! For Linear layer, grad = delta[l].
-        # ! For Activation layer, grad = w[l+1].T @ delta[l+1]
-        # ! Linear backward should return w[l].T @ grad
-        # ! Activation backward should return grad * g_prime(z[l])
-
 
 class Linear(Layer):
     """A fully connected linear layer for a neural network.
