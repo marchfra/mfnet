@@ -81,8 +81,8 @@ def coded_example(x: Tensor, y: Tensor, weights: list[Tensor]) -> None:
     print(f"Output after forward pass:\n{x}", end="\n\n")
 
     y_hat = x
-    dJ_d_y_hat = MSELoss().grad(y_hat, y)  # noqa: N806
-    grad = dJ_d_y_hat.copy()
+    dJ_dy_hat = MSELoss().grad(y_hat, y)  # noqa: N806
+    grad = dJ_dy_hat.copy()
     print(f"Initial gradient:\n{grad}", end="\n\n")
     layer_types = ["Linear", "Activation"]
 
@@ -92,13 +92,10 @@ def coded_example(x: Tensor, y: Tensor, weights: list[Tensor]) -> None:
         print(f"Layer {(layers.index(layer) + 2) // 2} {layer_type}")
         if layer_type == "Linear":
             print(f"dJ/dw:\n{layer.dJ_dw}")
-            print(f"Weights\n{layer.weights}")
         print(
             f"Gradient:\n{grad}",
             end="\n" * (2 - layers.index(layer) % 2),
         )
-        # if layers.index(layer) + 1 == 5:
-        #     break
 
 
 def main() -> None:
