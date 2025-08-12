@@ -20,6 +20,13 @@ def test_mse_loss_nonzero() -> None:
     assert loss.loss(pred, target) == 0.25
 
 
+def test_mse_loss_big_tensor() -> None:
+    loss = MSELoss()
+    pred = tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+    target = tensor([[0, 2, 3], [6, 5, 6], [7, 8, 9], [10, 11, 12]])
+    assert loss.loss(pred, target) == 5 / 12
+
+
 def test_mse_loss_shape_mismatch() -> None:
     loss = MSELoss()
     pred = tensor([[1.0, 2.0]])
