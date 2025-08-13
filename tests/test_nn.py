@@ -125,11 +125,11 @@ def test_get_weights_and_grads_returns_correct_tuples() -> None:
     layer2 = DummyLayerWithWeights(weights=tensor(20), grads=tensor(2))
     nn = NeuralNetwork([layer1, layer2])
 
-    results = list(nn.get_weights_and_grads())
+    results = list(nn.weights_and_dJ_dws())
     assert results == [(tensor(10), tensor(1)), (tensor(20), tensor(2))]
 
 
 def test_get_weights_and_grads_with_no_layers_returns_empty() -> None:
     nn = NeuralNetwork([])
-    results = list(nn.get_weights_and_grads())
+    results = list(nn.weights_and_dJ_dws())
     assert results == []

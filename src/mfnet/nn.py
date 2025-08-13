@@ -51,7 +51,7 @@ class NeuralNetwork:
             grad = layer.backward(grad)
         return grad
 
-    def get_weights_and_grads(self) -> Generator[tuple[Tensor, Tensor]]:
+    def weights_and_dJ_dws(self) -> Generator[tuple[Tensor, Tensor]]:  # noqa: N802
         """Yield the weights and their corresponding gradients for each layer.
 
         Yields:
