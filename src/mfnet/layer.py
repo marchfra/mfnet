@@ -54,24 +54,43 @@ class Linear(Layer):
 
     """
 
-    # TODO: bias consistency in number of features
     def __init__(self, in_features: int, out_features: int) -> None:
         """Initialize the layer with random weights.
 
         Args:
-            in_features (int): Number of input features. Includes bias.
-            out_features (int): Number of output features. Does not include bias.
+            in_features (int): Number of input features. Does not include the bias
+                feature, which is added automatically.
+            out_features (int): Number of output features. Does not include the bias
+                feature, which is added automatically.
+
+        Raises:
+            ValueError: If the provided number of features results in an empty weights
+                tensor.
 
         """
-        self.weights = self._init_weights((out_features, in_features))
-        self.out_features = out_features
+        # The weight tensor has dimensions (out_features + 1, in_features + 1): the
+        # extra row propagates forward the bias feature of the input; the extra column
+        # is the actual bias of the layer.
+        if in_features < 1:
+            raise ValueError(
+                "Invalid input feature dimension: in_features must be at least 1.",
+            )
+        if out_features < 1:
+            raise ValueError(
+                "Invalid output feature dimension: out_features must be at least 1.",
+            )
+
+        self.weights = self._init_weights((out_features + 1, in_features + 1))
+        self.out_features = out_features + 1
 
     @staticmethod
     def _init_weights(shape: tuple[int, int]) -> Tensor:
         """Initialize weight tensor with a given shape.
 
         The weights are sampled from a standard normal distribution. A bias row, in the
-        form [1, 0, 0, ...], is prepended to the weights.
+        form [1, 0, 0, ...], is prepended to the weights. This row is needed to
+        propagate forward the bias feature of the input. The actual bias term is
+        represented by the first column of the weight tensor, specifically `w[1:, 0]`
 
         Args:
             shape (tuple[int, int]): The shape of the weights tensor to initialize.
@@ -79,14 +98,8 @@ class Linear(Layer):
         Returns:
             Tensor: The initialized weights tensor with a bias row prepended.
 
-        Raises:
-            ValueError: If the provided shape results in an empty weights tensor.
-
         """
-        w = rng.standard_normal(shape)
-
-        if not w.size > 0:
-            raise ValueError("Weights must be initialized with a non-empty shape.")
+        w = rng.standard_normal((shape[0] - 1, shape[1]))
 
         bias_weights = tensor([1] + [0] * (w.shape[1] - 1))
         return np.insert(w, 0, bias_weights, axis=0)
@@ -99,7 +112,7 @@ class Linear(Layer):
 
         Args:
             x (Tensor): Input tensor to the layer. Must have shape (in_features,
-                batch_size).
+                batch_size). **Assumes the first row to be [1, 1, ...].**
 
         Returns:
             Tensor: The result of the matrix multiplication between weights and the
@@ -128,9 +141,9 @@ class Linear(Layer):
             ValueError: If the shape of `grad` is not compatible with the layer.
 
         """
-        if grad.shape != (self.out_features + 1, self.inputs.shape[1]):
+        if grad.shape != (self.out_features, self.inputs.shape[1]):
             raise ValueError(
-                f"Expected grad shape {(self.out_features + 1, self.inputs.shape[1])}, "
+                f"Expected grad shape {(self.out_features, self.inputs.shape[1])}, "
                 f"but got {grad.shape}",
             )
 
