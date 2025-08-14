@@ -1,4 +1,4 @@
-from collections.abc import Generator, Sequence
+from collections.abc import Iterator, Sequence
 
 from mfnet.layer import Layer
 from mfnet.tensor import Tensor
@@ -51,7 +51,7 @@ class NeuralNetwork:
             grad = layer.backward(grad)
         return grad
 
-    def weights_and_dJ_dws(self) -> Generator[tuple[Tensor, Tensor]]:  # noqa: N802
+    def weights_and_dJ_dws(self) -> Iterator[tuple[Tensor, Tensor]]:  # noqa: N802
         """Yield the weights and their corresponding gradients for each layer.
 
         Yields:
