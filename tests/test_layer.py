@@ -20,12 +20,6 @@ from mfnet.layer import (
 )
 from mfnet.tensor import Tensor, tensor
 
-
-@pytest.fixture
-def rng() -> Generator:
-    return np.random.default_rng()
-
-
 type XFactory = Callable[[int, int], Tensor]
 
 
