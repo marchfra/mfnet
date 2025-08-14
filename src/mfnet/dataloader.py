@@ -58,6 +58,7 @@ class BatchIterator(DataLoader):
 
         Args:
             batch_size (int, optional): Number of samples per batch. Defaults to 32.
+                Pass -1 to get the whole dataset as a batch.
             shuffle (bool, optional): Whether to shuffle the data at every epoch.
                 Defaults to True.
             seed (int, optional): Random seed for shuffling. Defaults to None.
@@ -93,10 +94,12 @@ class BatchIterator(DataLoader):
             raise ValueError(
                 "Input and target tensors must have the same number of datapoints.",
             )
+
+        if self.batch_size == -1:
+            self.batch_size = inputs.shape[0]
+
         inputs = np.insert(inputs.T, 0, 1, axis=0)  # Add bias "feature"
         targets = np.insert(targets.T, 0, 1, axis=0)  # Add bias "feature"
-        print(f"Inputs:\n{inputs}")
-        print(f"Targets:\n{targets}")
         first_element_indexes = np.arange(0, inputs.shape[1], self.batch_size)
         if self.shuffle:
             rng = np.random.default_rng(self.seed)
