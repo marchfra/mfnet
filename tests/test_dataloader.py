@@ -1,10 +1,8 @@
-from collections.abc import Callable
-
 import numpy as np
 import pytest
 
 from mfnet.dataloader import BatchIterator
-from mfnet.tensor import Tensor
+from tests.conftest import InputsFactory, TargetsFactory
 
 
 def test_batchiterator_default_init() -> None:
@@ -35,34 +33,12 @@ def test_batchiterator_custom_seed() -> None:
     assert dataloader.seed == 42
 
 
-type InputsFactory = Callable[[int, int], Tensor]
-type TargetsFactory = Callable[[int], Tensor]
-
-
-@pytest.fixture
-def inputs_factory(rng: np.random.Generator) -> InputsFactory:
-    def make_inputs(num_samples: int = 4, num_features: int = 2) -> Tensor:
-        inputs = rng.standard_normal((num_samples, num_features))
-        return inputs
-
-    return make_inputs
-
-
-@pytest.fixture
-def targets_factory(rng: np.random.Generator) -> TargetsFactory:
-    def make_targets(num_samples: int = 4) -> Tensor:
-        targets = rng.standard_normal(num_samples).reshape(-1, 1)
-        return targets
-
-    return make_targets
-
-
 def test_call_batches_shape_and_bias(
     inputs_factory: InputsFactory,
     targets_factory: TargetsFactory,
 ) -> None:
     inputs = inputs_factory(4, 2)
-    targets = targets_factory(4)
+    targets = targets_factory(4, 1)
     dataloader = BatchIterator(batch_size=2, shuffle=False)
     batches = list(dataloader(inputs, targets))
     # Check number of batches
@@ -85,7 +61,7 @@ def test_call_value_error_on_mismatched_samples(
     targets_factory: TargetsFactory,
 ) -> None:
     inputs = inputs_factory(3, 2)
-    targets = targets_factory(5)
+    targets = targets_factory(5, 1)
     dataloader = BatchIterator()
     with pytest.raises(ValueError, match="must have the same number of datapoints"):
         list(dataloader(inputs, targets))
@@ -96,7 +72,7 @@ def test_call_shuffle_changes_order(
     targets_factory: TargetsFactory,
 ) -> None:
     inputs = inputs_factory(6, 2)
-    targets = targets_factory(6)
+    targets = targets_factory(6, 1)
     dataloader1 = BatchIterator(batch_size=2, shuffle=True, seed=123)
     dataloader2 = BatchIterator(batch_size=2, shuffle=True, seed=123)
     batches1 = [batch.inputs for batch in dataloader1(inputs, targets)]
@@ -111,7 +87,7 @@ def test_call_no_shuffle_order(
     targets_factory: TargetsFactory,
 ) -> None:
     inputs = inputs_factory(6, 2)
-    targets = targets_factory(6)
+    targets = targets_factory(6, 1)
     dataloader = BatchIterator(batch_size=2, shuffle=False)
     batches = list(dataloader(inputs, targets))
     # The indexes should be in order: 0, 2, 4
@@ -128,9 +104,24 @@ def test_call_last_batch_smaller(
     targets_factory: TargetsFactory,
 ) -> None:
     inputs = inputs_factory(5, 2)
-    targets = targets_factory(5)
+    targets = targets_factory(5, 1)
     dataloader = BatchIterator(batch_size=2, shuffle=False)
     batches = list(dataloader(inputs, targets))
     # Last batch should have only 1 sample
     assert batches[-1].inputs.shape[1] == 1
     assert batches[-1].targets.shape[1] == 1
+
+
+@pytest.mark.parametrize("dataset_size", [37, 45, 1, 12, 127, 128, 129])
+def test_negative_1_batch_size_returns_whole_dataset(
+    inputs_factory: InputsFactory,
+    targets_factory: TargetsFactory,
+    dataset_size: int,
+) -> None:
+    num_features = 4
+    inputs = inputs_factory(dataset_size, num_features)
+    targets = targets_factory(dataset_size, 1)
+    dataloader = BatchIterator(batch_size=-1, shuffle=False)
+    batch = next(dataloader(inputs, targets))
+    assert batch.inputs.T.shape == (dataset_size, num_features + 1)
+    assert batch.targets.T.shape == (dataset_size, 2)
