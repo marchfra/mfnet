@@ -33,8 +33,10 @@ class MSELoss(Loss):
         """Compute the MSE loss between the predicted and target tensors.
 
         Args:
-            pred (Tensor): The predicted tensor.
-            target (Tensor): The ground truth tensor.
+            pred (Tensor): The predicted tensor. Must have shape (num_features,
+                num_samples).
+            target (Tensor): The ground truth tensor. Must have shape (num_features,
+                num_samples).
 
         Returns:
             float64: The computed MSE loss value.
@@ -46,15 +48,17 @@ class MSELoss(Loss):
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
-        return ((pred - target) ** 2).mean()
+        return ((pred - target) ** 2).mean(axis=1, dtype=target.dtype).sum()
 
     @staticmethod
     def grad(pred: Tensor, target: Tensor) -> Tensor:
         """Compute the gradient of the MSE loss with respect to the predicted tensor.
 
         Args:
-            pred (Tensor): The predicted values.
-            target (Tensor): The ground truth target values.
+            pred (Tensor): The predicted tensor. Must have shape (num_features,
+                num_samples).
+            target (Tensor): The ground truth tensor. Must have shape (num_features,
+                num_samples).
 
         Returns:
             Tensor: The gradient of the MSE loss with respect to the predictions.
@@ -66,4 +70,4 @@ class MSELoss(Loss):
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
-        return 2 * (pred - target) / pred.size
+        return 2 * (pred - target) / target.shape[1]

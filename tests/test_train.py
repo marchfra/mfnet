@@ -162,8 +162,7 @@ def test_train_test_defaults_are_used(
         test_targets=y_test,
     )
     assert len(train_losses) == 1000
-    assert len(test_losses) == 10
-    assert len(test_epochs) == 10
+    assert len(test_losses) == len(test_epochs) == 10
 
 
 def test_train_test_loss_decreases_for_simple_case(

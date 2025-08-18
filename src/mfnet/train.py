@@ -48,7 +48,7 @@ def train(  # noqa: PLR0913
         epoch_loss = float64(0.0)
         for batch in dataloader(inputs, targets):
             pred = net.forward(batch.inputs)
-            epoch_loss += loss.loss(pred, batch.targets) / len(batch.targets)
+            epoch_loss += loss.loss(pred, batch.targets)
             grad = loss.grad(pred, batch.targets)
             net.backward(grad)
             optimizer.step(net)
@@ -109,7 +109,7 @@ def train_test(  # noqa: PLR0913
         epoch_loss = float64(0.0)
         for batch in dataloader(train_inputs, train_targets):
             pred = net.forward(batch.inputs)
-            epoch_loss += loss.loss(pred, batch.targets) / len(batch.targets)
+            epoch_loss += loss.loss(pred, batch.targets)
             grad = loss.grad(pred, batch.targets)
             net.backward(grad)
             optimizer.step(net)
