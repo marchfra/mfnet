@@ -354,6 +354,38 @@ def identity_prime(x: Tensor) -> Tensor:
     return np.ones_like(x)
 
 
+def softmax(x: Tensor) -> Tensor:
+    """Apply the softmax activation function to the input tensor.
+
+    The softmax function is defined as: f(x_i) = exp(x_i) / sum(exp(x_j)) for all j.
+
+    Args:
+        x (Tensor): Input tensor.
+
+    Returns:
+        Tensor: Output tensor with the softmax function applied element-wise.
+
+    """
+    # Use axis=0 because we want to compute the softmax for each column (i.e., sample)
+    # independently
+    e_x = np.exp(x - np.max(x, axis=0, keepdims=True))  # For numerical stability
+    return e_x / np.sum(e_x, axis=0, keepdims=True)
+
+
+def softmax_prime(x: Tensor) -> Tensor:
+    """Compute the derivative of the softmax activation function.
+
+    Args:
+        x (Tensor): Input tensor.
+
+    Returns:
+        Tensor: The Jacobian matrix of the softmax function with respect to the input.
+
+    """
+    s = softmax(x)
+    return np.diagflat(s) - np.dot(s, s.T)
+
+
 class Sigmoid(Activation):
     """Sigmoid activation layer.
 

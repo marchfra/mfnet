@@ -7,6 +7,8 @@ from mfnet.layer import (
     relu_prime,
     sigmoid,
     sigmoid_prime,
+    softmax,
+    softmax_prime,
 )
 from mfnet.tensor import tensor
 
@@ -202,3 +204,93 @@ def test_identity_prime_returns_ones_empty() -> None:
     expected = tensor([])
     result = identity_prime(x)
     np.testing.assert_array_equal(result, expected)
+
+
+def test_softmax_basic() -> None:
+    x = tensor(
+        [
+            [1, 5, 3],
+            [4, 3, 3],
+        ],
+    )
+    result = softmax(x)
+    expected = tensor(
+        [
+            [np.exp(-3) / (1 + np.exp(-3)), 1 / (1 + np.exp(-2)), 0.5],
+            [1 / (1 + np.exp(-3)), np.exp(-2) / (1 + np.exp(-2)), 0.5],
+        ],
+    )
+    np.testing.assert_array_almost_equal(result, expected)
+
+
+def test_softmax_numerical_stability() -> None:
+    x = tensor(
+        [
+            [10_000, 100_001],
+            [10_002, 100_003],
+            [10_004, 100_005],
+        ],
+    )
+    result = softmax(x)
+    assert np.allclose(np.sum(result, axis=0), np.ones(x.shape[1]))
+
+
+def test_softmax_sum_to_one() -> None:
+    x = tensor(
+        [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+            [10, 11, 12],
+        ],
+    )
+    result = softmax(x)
+    sums = np.sum(result, axis=0)
+    np.testing.assert_allclose(sums, np.ones(x.shape[1]), rtol=1e-6)
+
+
+def test_softmax_prime_shape() -> None:
+    # Test that the output shape is correct (Jacobian: n x n)
+    x = tensor([[1.0], [2.0], [3.0]])
+    jacobian = softmax_prime(x)
+    assert jacobian.shape == (3, 3)
+
+
+def test_softmax_prime_sum_zero() -> None:
+    # The rows of the Jacobian should sum to zero (since softmax outputs sum to 1)
+    x = tensor([[0.5], [1.5], [2.5]])
+    jacobian = softmax_prime(x)
+    row_sums = np.sum(jacobian, axis=1)
+    np.testing.assert_allclose(row_sums, np.zeros_like(row_sums), atol=1e-7)
+
+
+def test_softmax_prime_diagonal() -> None:
+    # The diagonal elements should be s_i * (1 - s_i)
+    x = tensor([[2.0], [1.0], [0.1]])
+    s = softmax(x)
+    jacobian = softmax_prime(x)
+    diag = np.diag(jacobian)
+    expected_diag = (s * (1 - s)).flatten()
+    np.testing.assert_allclose(diag, expected_diag, atol=1e-7)
+
+
+def test_softmax_prime_off_diagonal() -> None:
+    # The off-diagonal elements should be -s_i * s_j
+    x = tensor([[1.0], [2.0]])
+    s = softmax(x)
+    jacobian = softmax_prime(x)
+    expected = tensor(
+        [
+            [s[0, 0] * (1 - s[0, 0]), -s[0, 0] * s[1, 0]],
+            [-s[1, 0] * s[0, 0], s[1, 0] * (1 - s[1, 0])],
+        ],
+    )
+    np.testing.assert_allclose(jacobian, expected, atol=1e-7)
+
+
+def test_softmax_prime_single_value() -> None:
+    # For a single value, the Jacobian should be zero
+    x = tensor([[5.0]])
+    jacobian = softmax_prime(x)
+    assert jacobian.shape == (1, 1)
+    np.testing.assert_allclose(jacobian, np.zeros((1, 1)), atol=1e-7)
