@@ -99,7 +99,12 @@ class Linear(Layer):
             Tensor: The initialized weights tensor with a bias row prepended.
 
         """
-        w = rng.standard_normal((shape[0] - 1, shape[1]))
+        # Using He initialization
+        w = rng.normal(
+            loc=0.0,
+            scale=np.sqrt(2 / shape[1]),
+            size=(shape[0] - 1, shape[1]),
+        )
 
         bias_weights = tensor([1] + [0] * (w.shape[1] - 1))
         return np.insert(w, 0, bias_weights, axis=0)
