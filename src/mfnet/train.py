@@ -49,7 +49,9 @@ def train(  # noqa: PLR0913
     losses: list[float64] = []
     for _epoch in range(num_epochs):
         epoch_loss = float64(0.0)
+        num_batches: int = 0
         for batch in dataloader(inputs, targets):
+            num_batches += 1
             pred = net.forward(batch.inputs)
             epoch_loss += loss.loss(pred, batch.targets)
             grad = loss.grad(pred, batch.targets)
@@ -57,7 +59,7 @@ def train(  # noqa: PLR0913
             if max_gradient_norm is not None:
                 optimizer.clip_gradients(net, max_norm=max_gradient_norm)
             optimizer.step(net)
-        losses.append(epoch_loss)
+        losses.append(epoch_loss / num_batches)
     return losses
 
 
@@ -115,20 +117,23 @@ def train_test(  # noqa: PLR0913
     test_losses: list[float64] = []
     for epoch in range(num_epochs):
         epoch_loss = float64(0.0)
+        num_batches: int = 0
         for batch in dataloader(train_inputs, train_targets):
+            num_batches += 1
             pred = net.forward(batch.inputs)
-            epoch_loss += loss.loss(pred, batch.targets)
+            batch_loss = loss.loss(pred, batch.targets)
+            epoch_loss += batch_loss
             grad = loss.grad(pred, batch.targets)
             net.backward(grad)
             if max_gradient_norm is not None:
                 optimizer.clip_gradients(net, max_norm=max_gradient_norm)
             optimizer.step(net)
 
+        epoch_loss /= num_batches
+
         if epoch % test_interval == 0:
             test_pred = net.forward(test_batch.inputs)
-            test_loss = loss.loss(test_pred, test_batch.targets) / len(
-                test_batch.targets,
-            )
+            test_loss = loss.loss(test_pred, test_batch.targets)
             test_epochs.append(epoch)
             test_losses.append(test_loss)
 
