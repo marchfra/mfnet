@@ -17,6 +17,7 @@ def train(  # noqa: PLR0913
     dataloader: DataLoader | None = None,
     loss: Loss | None = None,
     optimizer: Optimizer | None = None,
+    max_gradient_norm: float | None = None,
 ) -> list[float64]:
     """Train a neural network model using the provided data, loss, and optimizer.
 
@@ -31,6 +32,8 @@ def train(  # noqa: PLR0913
         loss (Loss, optional): Loss function to optimize. If None, uses MSELoss.
         optimizer (Optimizer, optional): Optimizer for updating model parameters. If
             None, uses SGD with specified learning rate.
+        max_gradient_norm (float, optional): The maximum gradient norm to clip to.
+            Defaults to None.
 
     Returns:
         list[float64]: List of loss values for each epoch.
@@ -51,6 +54,8 @@ def train(  # noqa: PLR0913
             epoch_loss += loss.loss(pred, batch.targets)
             grad = loss.grad(pred, batch.targets)
             net.backward(grad)
+            if max_gradient_norm is not None:
+                optimizer.clip_gradients(net, max_norm=max_gradient_norm)
             optimizer.step(net)
         losses.append(epoch_loss)
     return losses
@@ -68,6 +73,7 @@ def train_test(  # noqa: PLR0913
     dataloader: DataLoader | None = None,
     loss: Loss | None = None,
     optimizer: Optimizer | None = None,
+    max_gradient_norm: float | None = None,
 ) -> tuple[list[float64], list[int], list[float64]]:
     """Train a neural network model using the provided data, loss, and optimizer.
 
@@ -85,6 +91,8 @@ def train_test(  # noqa: PLR0913
         loss (Loss, optional): Loss function to optimize. If None, uses MSELoss.
         optimizer (Optimizer, optional): Optimizer for updating model parameters. If
             None, uses SGD with specified learning rate.
+        max_gradient_norm (float, optional): The maximum gradient norm to clip to.
+            Defaults to None.
 
     Returns:
         tuple[list[float64], list[int], list[float64]]:
@@ -112,6 +120,8 @@ def train_test(  # noqa: PLR0913
             epoch_loss += loss.loss(pred, batch.targets)
             grad = loss.grad(pred, batch.targets)
             net.backward(grad)
+            if max_gradient_norm is not None:
+                optimizer.clip_gradients(net, max_norm=max_gradient_norm)
             optimizer.step(net)
 
         if epoch % test_interval == 0:

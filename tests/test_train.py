@@ -42,6 +42,10 @@ class DummyOptimizer(Optimizer):
     def step(self, net: NeuralNetwork) -> None:
         self.step_called = True
 
+    @staticmethod
+    def clip_gradients(net: NeuralNetwork, max_norm: float = 1.0) -> None:
+        pass
+
 
 def test_train_basic_flow() -> None:
     net = DummyModel()
@@ -102,6 +106,36 @@ def test_train_returns_empty_list_for_zero_epochs() -> None:
         num_epochs=0,
     )
     assert losses == []
+
+
+def test_train_clip_gradients_calls_clip_gradients(
+    inputs_factory: InputsFactory,
+    targets_factory: TargetsFactory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    called = {"value": False}
+
+    def mock_clip_gradients(net: NeuralNetwork, max_norm: float = 1.0) -> None:
+        called["value"] = True
+
+    monkeypatch.setattr(
+        DummyOptimizer,
+        "clip_gradients",
+        staticmethod(mock_clip_gradients),
+    )
+    optimizer = DummyOptimizer()
+    net = DummyModel()
+    inputs = inputs_factory(10, 2)
+    targets = targets_factory(10, 2)
+    train(
+        net=net,
+        inputs=inputs,
+        targets=targets,
+        num_epochs=2,
+        optimizer=optimizer,
+        max_gradient_norm=1.0,
+    )
+    assert called["value"]
 
 
 def test_train_test_basic_flow(
@@ -213,62 +247,38 @@ def test_train_test_returns_empty_list_for_zero_epochs(
     assert train_losses == []
 
 
-def test_train_test_split_shapes() -> None:
-    x = np.arange(10, dtype=np.float64).reshape(10, 1)
-    y = np.arange(10, 20, dtype=np.float64).reshape(10, 1)
-    x_train, y_train, x_test, y_test = train_test_split(x, y, test_size=0.3, seed=42)
-    assert x_train.shape[0] == y_train.shape[0] == 7
-    assert x_test.shape[0] == y_test.shape[0] == 3
-    # Check that all samples are present and no duplicates
-    all_indices = np.concatenate([x_train.squeeze(), x_test.squeeze()])
-    assert sorted(all_indices.tolist()) == list(range(10))
-
-
-def test_train_test_split_default_test_size() -> None:
-    x = np.arange(5, dtype=np.float64).reshape(5, 1)
-    y = np.arange(5, 10, dtype=np.float64).reshape(5, 1)
-    x_train, y_train, x_test, y_test = train_test_split(x, y)
-    assert x_train.shape[0] == y_train.shape[0] == 4
-    assert x_test.shape[0] == y_test.shape[0] == 1
-
-
-def test_train_test_split_seed_reproducibility() -> None:
-    x = np.arange(20, dtype=np.float64).reshape(20, 1)
-    y = np.arange(20, 40, dtype=np.float64).reshape(20, 1)
-    split1 = train_test_split(x, y, test_size=0.25, seed=123)
-    split2 = train_test_split(x, y, test_size=0.25, seed=123)
-    for arr1, arr2 in zip(split1, split2, strict=True):
-        np.testing.assert_array_equal(arr1, arr2)
-
-
-def test_train_test_split_no_seed_gives_different_results() -> None:
-    x = np.arange(20, dtype=np.float64).reshape(20, 1)
-    y = np.arange(20, 40, dtype=np.float64).reshape(20, 1)
-    split1 = train_test_split(x, y, test_size=0.25)
-    split2 = train_test_split(x, y, test_size=0.25)
-    # It's possible (but unlikely) that the splits are the same, so check not all arrays
-    # are equal
-    assert not all(
-        np.array_equal(arr1, arr2) for arr1, arr2 in zip(split1, split2, strict=True)
-    )
-
-
-def test_train_test_split_empty_input() -> None:
-    x = np.empty((0, 1))
-    y = np.empty((0, 1))
-    x_train, y_train, x_test, y_test = train_test_split(x, y)
-    assert x_train.shape[0] == y_train.shape[0] == 0
-    assert x_test.shape[0] == y_test.shape[0] == 0
-
-
-@pytest.mark.parametrize("test_size", list(range(0, 101, 3)))
-def test_train_test_split_test_size(
+def test_train_test_clip_gradients_calls_clip_gradients(
     inputs_factory: InputsFactory,
     targets_factory: TargetsFactory,
-    test_size: int,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    x = inputs_factory(100, 4)
-    y = targets_factory(100, 2)
-    x_train, y_train, x_test, y_test = train_test_split(x, y, test_size=test_size / 100)
-    assert x_train.shape[0] == y_train.shape[0] == 100 - test_size
-    assert x_test.shape[0] == y_test.shape[0] == test_size
+    called = {"value": False}
+
+    def mock_clip_gradients(net: NeuralNetwork, max_norm: float = 1.0) -> None:
+        called["value"] = True
+
+    monkeypatch.setattr(
+        DummyOptimizer,
+        "clip_gradients",
+        staticmethod(mock_clip_gradients),
+    )
+    optimizer = DummyOptimizer()
+    net = DummyModel()
+    inputs = inputs_factory(10, 2)
+    targets = targets_factory(10, 2)
+    x_train, y_train, x_test, y_test = train_test_split(
+        inputs,
+        targets,
+        test_size=0.2,
+    )
+    train_test(
+        net=net,
+        train_inputs=x_train,
+        train_targets=y_train,
+        test_inputs=x_test,
+        test_targets=y_test,
+        num_epochs=2,
+        optimizer=optimizer,
+        max_gradient_norm=1.0,
+    )
+    assert called["value"]

@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
+
 from mfnet.nn import NeuralNetwork
 
 
@@ -31,6 +33,26 @@ class Optimizer(ABC):
 
         """
 
+    @staticmethod
+    def clip_gradients(net: NeuralNetwork, max_norm: float = 1.0) -> None:
+        """Clip the gradients of the neural network's weights to a maximum norm.
+
+        Iterate over all weights and their corresponding gradients in the given neural
+        network. If the L2 norm of a gradient exceeds the specified `max_norm`, the
+        gradient is scaled down so that its norm equals `max_norm`. This helps prevent
+        exploding gradients during training.
+
+        Args:
+            net (NeuralNetwork): The neural network whose gradients will be clipped.
+            max_norm (float, optional): The maximum allowed norm for the gradients.
+                Defaults to 1.0.
+
+        """
+        for _weight, dJ_dw in net.weights_and_dJ_dws():  # noqa: N806
+            norm = np.linalg.norm(dJ_dw)
+            if norm > max_norm:
+                dJ_dw[:] = dJ_dw * (max_norm / norm)
+
 
 class SGD(Optimizer):
     """Stochastic Gradient Descent (SGD) optimizer.
@@ -43,16 +65,6 @@ class SGD(Optimizer):
             1e-3.
 
     """
-
-    def __init__(self, learning_rate: float = 1e-3) -> None:
-        """Initialize the optimizer with the specified learning rate.
-
-        Args:
-            learning_rate (float, optional): The learning rate for the optimizer.
-                Defaults to 1e-3.
-
-        """
-        super().__init__(learning_rate)
 
     def step(self, net: NeuralNetwork) -> None:
         """Perform a single optimization step on the provided neural network.
