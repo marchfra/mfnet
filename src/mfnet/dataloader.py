@@ -49,7 +49,7 @@ class BatchIterator(DataLoader):
 
     def __init__(
         self,
-        batch_size: int = 32,
+        batch_size: int = 128,
         *,
         shuffle: bool = True,
         seed: int | None = None,

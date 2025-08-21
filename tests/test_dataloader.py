@@ -7,7 +7,7 @@ from tests.conftest import InputsFactory, TargetsFactory
 
 def test_batchiterator_default_init() -> None:
     dataloader = BatchIterator()
-    assert dataloader.batch_size == 32
+    assert dataloader.batch_size == 128
     assert dataloader.shuffle is True
     assert dataloader.seed is None
 
@@ -21,14 +21,14 @@ def test_batchiterator_custom_batch_size() -> None:
 
 def test_batchiterator_custom_shuffle_false() -> None:
     dataloader = BatchIterator(shuffle=False)
-    assert dataloader.batch_size == 32
+    assert dataloader.batch_size == 128
     assert dataloader.shuffle is False
     assert dataloader.seed is None
 
 
 def test_batchiterator_custom_seed() -> None:
     dataloader = BatchIterator(seed=42)
-    assert dataloader.batch_size == 32
+    assert dataloader.batch_size == 128
     assert dataloader.shuffle is True
     assert dataloader.seed == 42
 
