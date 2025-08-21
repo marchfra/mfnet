@@ -423,3 +423,16 @@ class Id(Activation):
 
     def __init__(self) -> None:
         super().__init__(identity, identity_prime)
+
+
+class Softmax(Activation):
+    """Softmax activation layer.
+
+    This class represents a layer that applies the softmax activation function to its
+    inputs. It inherits from the Activation base class and initializes the layer with
+    the softmax function and its derivative.
+
+    """
+
+    def __init__(self) -> None:
+        super().__init__(softmax, softmax_prime)

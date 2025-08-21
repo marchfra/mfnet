@@ -2,12 +2,15 @@ from mfnet.layer import (
     Id,
     ReLU,
     Sigmoid,
+    Softmax,
     identity,
     identity_prime,
     relu,
     relu_prime,
     sigmoid,
     sigmoid_prime,
+    softmax,
+    softmax_prime,
 )
 
 
@@ -27,3 +30,9 @@ def test_id_init_sets_functions() -> None:
     layer = Id()
     assert layer.g is identity
     assert layer.g_prime is identity_prime
+
+
+def test_softmax_init_sets_functions() -> None:
+    layer = Softmax()
+    assert layer.g is softmax
+    assert layer.g_prime is softmax_prime
