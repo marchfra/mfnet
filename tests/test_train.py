@@ -169,7 +169,7 @@ def test_train_test_basic_flow(
     assert len(train_losses) == 15
     assert all(isinstance(loss, np.float64) for loss in train_losses)
     assert isinstance(test_losses, list)
-    assert len(test_losses) == len(test_epochs) == 3
+    assert len(test_losses) == len(test_epochs) == 4
     assert all(isinstance(loss, np.float64) for loss in test_losses)
     assert net.forward_called
     assert net.backward_called
@@ -197,7 +197,7 @@ def test_train_test_defaults_are_used(
         test_targets=y_test,
     )
     assert len(train_losses) == 1000
-    assert len(test_losses) == len(test_epochs) == 10
+    assert len(test_losses) == len(test_epochs) == 11
 
 
 def test_train_test_loss_decreases_for_simple_case(

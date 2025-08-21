@@ -137,4 +137,11 @@ def train_test(  # noqa: PLR0913
             test_losses.append(test_loss)
 
         train_losses.append(epoch_loss)
+
+    if (num_epochs - 1) % test_interval != 0:
+        test_pred = net.forward(test_batch.inputs)
+        test_loss = loss.loss(test_pred, test_batch.targets)
+        test_epochs.append(num_epochs - 1)
+        test_losses.append(test_loss)
+
     return train_losses, test_epochs, test_losses
