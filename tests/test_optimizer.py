@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.random import Generator
 
-from mfnet.layer import Id, Linear, ReLU
+from mfnet.layer import Linear, ReLU
 from mfnet.nn import NeuralNetwork
 from mfnet.optimizer import SGD, Optimizer
 
@@ -47,7 +47,7 @@ def test_sgd_step_updates_weights_correctly(rng: Generator) -> None:
     layer2 = Linear(3, 5)
     layer1.dJ_dw = rng.standard_normal((4, 3))
     layer2.dJ_dw = rng.standard_normal((6, 4))
-    net = NeuralNetwork([layer1, ReLU(), layer2, Id()])
+    net = NeuralNetwork([layer1, ReLU(), layer2])
 
     sgd = SGD(learning_rate=0.5)
     weights_before, _ = next(net.weights_and_dJ_dws())
@@ -62,7 +62,7 @@ def test_sgd_step_with_zero_gradient() -> None:
     layer2 = Linear(3, 5)
     layer1.dJ_dw = np.zeros((4, 3))
     layer2.dJ_dw = np.zeros((6, 4))
-    net = NeuralNetwork([layer1, ReLU(), layer2, Id()])
+    net = NeuralNetwork([layer1, ReLU(), layer2])
 
     sgd = SGD(learning_rate=0.5)
     weights_before, _ = next(net.weights_and_dJ_dws())
@@ -77,7 +77,7 @@ def test_sgd_step_with_zero_learning_rate(rng: Generator) -> None:
     layer2 = Linear(3, 5)
     layer1.dJ_dw = rng.standard_normal((4, 3))
     layer2.dJ_dw = rng.standard_normal((6, 4))
-    net = NeuralNetwork([layer1, ReLU(), layer2, Id()])
+    net = NeuralNetwork([layer1, ReLU(), layer2])
 
     sgd = SGD(learning_rate=0)
     weights_before, _ = next(net.weights_and_dJ_dws())

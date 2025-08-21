@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from mfnet.dataloader import BatchIterator
-from mfnet.layer import Id, Layer, Linear
+from mfnet.layer import Layer, Linear
 from mfnet.loss import MSELoss
 from mfnet.nn import NeuralNetwork
 from mfnet.optimizer import Optimizer
@@ -83,7 +83,7 @@ def test_train_defaults_are_used() -> None:
 
 
 def test_train_loss_decreases_for_simple_case() -> None:
-    net = DummyModel([Linear(1, 1), Id()])
+    net = DummyModel([Linear(1, 1)])
     inputs = tensor([[1.0], [2.0]])
     targets = tensor([[2.0], [4.0]])
     losses = train(
@@ -203,7 +203,7 @@ def test_train_test_loss_decreases_for_simple_case(
     inputs_factory: InputsFactory,
     targets_factory: TargetsFactory,
 ) -> None:
-    net = DummyModel([Linear(1, 1), Id()])
+    net = DummyModel([Linear(1, 1)])
     inputs = inputs_factory(13, 1)
     targets = targets_factory(13, 1)
     x_train, y_train, x_test, y_test = train_test_split(
