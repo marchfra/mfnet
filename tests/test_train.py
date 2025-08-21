@@ -9,7 +9,8 @@ from mfnet.loss import MSELoss
 from mfnet.nn import NeuralNetwork
 from mfnet.optimizer import Optimizer
 from mfnet.tensor import Tensor, tensor
-from mfnet.train import train, train_test, train_test_split
+from mfnet.train import train, train_test
+from mfnet.trainutils import train_test_split
 from tests.conftest import InputsFactory, TargetsFactory
 
 

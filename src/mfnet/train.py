@@ -1,4 +1,3 @@
-import numpy as np
 from numpy import float64
 
 from mfnet.dataloader import BatchIterator, DataLoader
@@ -139,37 +138,3 @@ def train_test(  # noqa: PLR0913
 
         train_losses.append(epoch_loss)
     return train_losses, test_epochs, test_losses
-
-
-def train_test_split(
-    x: Tensor,
-    y: Tensor,
-    test_size: float = 0.2,
-    seed: int | None = None,
-) -> tuple[Tensor, Tensor, Tensor, Tensor]:
-    """Split tensors `x` and `y` into training and test sets.
-
-    Args:
-        x (Tensor): Input features tensor of shape (num_samples, num_features).
-        y (Tensor): Target tensor of shape (num_samples, num_features).
-        test_size (float, optional): Proportion of the dataset to include in the test
-            split (default: 0.2).
-        seed (int | None, optional): Random seed for reproducibility (default: None).
-
-    Returns:
-        tuple[Tensor, Tensor, Tensor, Tensor]:
-            - x_train (Tensor): Training inputs.
-            - y_train (Tensor): Training targets.
-            - x_test (Tensor): Test inputs.
-            - y_test (Tensor): Test targets.
-
-    """
-    num_samples = x.shape[0]
-    rng = np.random.default_rng(seed)
-    indices = rng.permutation(num_samples)
-    test_size = round(num_samples * test_size)
-    train_indices, test_indices = (
-        sorted(indices[test_size:]),
-        sorted(indices[:test_size]),
-    )
-    return x[train_indices], y[train_indices], x[test_indices], y[test_indices]
