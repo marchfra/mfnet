@@ -383,7 +383,7 @@ def softmax_prime(x: Tensor) -> Tensor:
 
     """
     s = softmax(x)
-    return np.diagflat(s) - np.dot(s, s.T)
+    return s * (1 - s)
 
 
 class Sigmoid(Activation):

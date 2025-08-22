@@ -250,47 +250,24 @@ def test_softmax_sum_to_one() -> None:
 
 
 def test_softmax_prime_shape() -> None:
-    # Test that the output shape is correct (Jacobian: n x n)
+    # Test that the output shape is correct
     x = tensor([[1.0], [2.0], [3.0]])
-    jacobian = softmax_prime(x)
-    assert jacobian.shape == (3, 3)
+    grad = softmax_prime(x)
+    assert grad.shape == x.shape
 
 
-def test_softmax_prime_sum_zero() -> None:
-    # The rows of the Jacobian should sum to zero (since softmax outputs sum to 1)
-    x = tensor([[0.5], [1.5], [2.5]])
-    jacobian = softmax_prime(x)
-    row_sums = np.sum(jacobian, axis=1)
-    np.testing.assert_allclose(row_sums, np.zeros_like(row_sums), atol=1e-7)
-
-
-def test_softmax_prime_diagonal() -> None:
+def test_softmax_prime_output() -> None:
     # The diagonal elements should be s_i * (1 - s_i)
     x = tensor([[2.0], [1.0], [0.1]])
     s = softmax(x)
-    jacobian = softmax_prime(x)
-    diag = np.diag(jacobian)
-    expected_diag = (s * (1 - s)).flatten()
-    np.testing.assert_allclose(diag, expected_diag, atol=1e-7)
-
-
-def test_softmax_prime_off_diagonal() -> None:
-    # The off-diagonal elements should be -s_i * s_j
-    x = tensor([[1.0], [2.0]])
-    s = softmax(x)
-    jacobian = softmax_prime(x)
-    expected = tensor(
-        [
-            [s[0, 0] * (1 - s[0, 0]), -s[0, 0] * s[1, 0]],
-            [-s[1, 0] * s[0, 0], s[1, 0] * (1 - s[1, 0])],
-        ],
-    )
-    np.testing.assert_allclose(jacobian, expected, atol=1e-7)
+    grad = softmax_prime(x)
+    expected = s * (1 - s)
+    np.testing.assert_allclose(grad, expected, atol=1e-7)
 
 
 def test_softmax_prime_single_value() -> None:
-    # For a single value, the Jacobian should be zero
+    # For a single value, the derivative should be zero
     x = tensor([[5.0]])
-    jacobian = softmax_prime(x)
-    assert jacobian.shape == (1, 1)
-    np.testing.assert_allclose(jacobian, np.zeros((1, 1)), atol=1e-7)
+    grad = softmax_prime(x)
+    assert grad.shape == x.shape
+    np.testing.assert_allclose(grad, np.zeros(x.shape), atol=1e-7)
