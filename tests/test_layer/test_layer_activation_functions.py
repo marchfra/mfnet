@@ -7,8 +7,6 @@ from mfnet.layer import (
     relu_prime,
     sigmoid,
     sigmoid_prime,
-    softmax,
-    softmax_prime,
 )
 from mfnet.tensor import tensor
 
@@ -204,70 +202,3 @@ def test_identity_prime_returns_ones_empty() -> None:
     expected = tensor([])
     result = identity_prime(x)
     np.testing.assert_array_equal(result, expected)
-
-
-def test_softmax_basic() -> None:
-    x = tensor(
-        [
-            [1, 5, 3],
-            [4, 3, 3],
-        ],
-    )
-    result = softmax(x)
-    expected = tensor(
-        [
-            [np.exp(-3) / (1 + np.exp(-3)), 1 / (1 + np.exp(-2)), 0.5],
-            [1 / (1 + np.exp(-3)), np.exp(-2) / (1 + np.exp(-2)), 0.5],
-        ],
-    )
-    np.testing.assert_array_almost_equal(result, expected)
-
-
-def test_softmax_numerical_stability() -> None:
-    x = tensor(
-        [
-            [10_000, 100_001],
-            [10_002, 100_003],
-            [10_004, 100_005],
-        ],
-    )
-    result = softmax(x)
-    assert np.allclose(np.sum(result, axis=0), np.ones(x.shape[1]))
-
-
-def test_softmax_sum_to_one() -> None:
-    x = tensor(
-        [
-            [1, 2, 3],
-            [4, 5, 6],
-            [7, 8, 9],
-            [10, 11, 12],
-        ],
-    )
-    result = softmax(x)
-    sums = np.sum(result, axis=0)
-    np.testing.assert_allclose(sums, np.ones(x.shape[1]), rtol=1e-6)
-
-
-def test_softmax_prime_shape() -> None:
-    # Test that the output shape is correct
-    x = tensor([[1.0], [2.0], [3.0]])
-    grad = softmax_prime(x)
-    assert grad.shape == x.shape
-
-
-def test_softmax_prime_output() -> None:
-    # The diagonal elements should be s_i * (1 - s_i)
-    x = tensor([[2.0], [1.0], [0.1]])
-    s = softmax(x)
-    grad = softmax_prime(x)
-    expected = s * (1 - s)
-    np.testing.assert_allclose(grad, expected, atol=1e-7)
-
-
-def test_softmax_prime_single_value() -> None:
-    # For a single value, the derivative should be zero
-    x = tensor([[5.0]])
-    grad = softmax_prime(x)
-    assert grad.shape == x.shape
-    np.testing.assert_allclose(grad, np.zeros(x.shape), atol=1e-7)
