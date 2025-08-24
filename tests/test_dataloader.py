@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from mfnet.dataloader import BatchIterator
-from tests.conftest import InputsFactory, TargetsFactory
+from tests.conftest import TensorFactory
 
 
 def test_batchiterator_default_init() -> None:
@@ -34,8 +34,8 @@ def test_batchiterator_custom_seed() -> None:
 
 
 def test_call_batches_shape_and_bias(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    targets_factory: TensorFactory,
 ) -> None:
     inputs = inputs_factory(4, 2)
     targets = targets_factory(4, 1)
@@ -57,8 +57,8 @@ def test_call_batches_shape_and_bias(
 
 
 def test_call_value_error_on_mismatched_samples(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    targets_factory: TensorFactory,
 ) -> None:
     inputs = inputs_factory(3, 2)
     targets = targets_factory(5, 1)
@@ -68,8 +68,8 @@ def test_call_value_error_on_mismatched_samples(
 
 
 def test_call_shuffle_changes_order(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    targets_factory: TensorFactory,
 ) -> None:
     inputs = inputs_factory(6, 2)
     targets = targets_factory(6, 1)
@@ -83,8 +83,8 @@ def test_call_shuffle_changes_order(
 
 
 def test_call_no_shuffle_order(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    targets_factory: TensorFactory,
 ) -> None:
     inputs = inputs_factory(6, 2)
     targets = targets_factory(6, 1)
@@ -100,8 +100,8 @@ def test_call_no_shuffle_order(
 
 
 def test_call_last_batch_smaller(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    targets_factory: TensorFactory,
 ) -> None:
     inputs = inputs_factory(5, 2)
     targets = targets_factory(5, 1)
@@ -114,8 +114,8 @@ def test_call_last_batch_smaller(
 
 @pytest.mark.parametrize("dataset_size", [37, 45, 1, 12, 127, 128, 129])
 def test_negative_1_batch_size_returns_whole_dataset(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    targets_factory: TensorFactory,
     dataset_size: int,
 ) -> None:
     num_features = 4
