@@ -1,10 +1,11 @@
 from numpy import float64
 
 from mfnet.dataloader import BatchIterator, DataLoader
-from mfnet.loss import Loss, MSELoss
+from mfnet.loss import CELoss, Loss, MSELoss
 from mfnet.nn import NeuralNetwork
 from mfnet.optimizer import SGD, Optimizer
 from mfnet.tensor import Tensor
+from mfnet.trainutils import accuracy
 
 
 def train(  # noqa: PLR0913
@@ -62,7 +63,7 @@ def train(  # noqa: PLR0913
     return losses
 
 
-def train_test(  # noqa: PLR0913
+def train_test_regression(  # noqa: PLR0913
     net: NeuralNetwork,
     train_inputs: Tensor,
     train_targets: Tensor,
@@ -145,3 +146,95 @@ def train_test(  # noqa: PLR0913
         test_losses.append(test_loss)
 
     return train_losses, test_epochs, test_losses
+
+
+def train_test_classification(  # noqa: PLR0913
+    net: NeuralNetwork,
+    train_inputs: Tensor,
+    train_targets: Tensor,
+    test_inputs: Tensor,
+    test_targets: Tensor,
+    num_epochs: int = 1000,
+    test_interval: int = 100,
+    lr: float = 1e-3,
+    dataloader: DataLoader | None = None,
+    loss: Loss | None = None,
+    optimizer: Optimizer | None = None,
+    max_gradient_norm: float | None = None,
+) -> tuple[list[float64], list[int], list[float64], list[float64]]:
+    """Train a neural network model using the provided data, loss, and optimizer.
+
+    Args:
+        net (NeuralNetwork): The neural network model to be trained.
+        train_inputs (Tensor): Input data for training.
+        train_targets (Tensor): Target labels for training.
+        test_inputs (Tensor): Input data for testing.
+        test_targets (Tensor): Target labels for testing.
+        num_epochs (int, optional): Number of training epochs. Defaults to 1000.
+        test_interval (int, optional): Interval for testing the model. Defaults to 100.
+        lr (float, optional): Learning rate for the optimizer. Defaults to 1e-3.
+        dataloader (DataLoader, optional): DataLoader for batching inputs and targets.
+            If None, uses BatchIterator.
+        loss (Loss, optional): Loss function to optimize. If None, uses CELoss.
+        optimizer (Optimizer, optional): Optimizer for updating model parameters. If
+            None, uses SGD with specified learning rate.
+        max_gradient_norm (float, optional): The maximum gradient norm to clip to.
+            Defaults to None.
+
+    Returns:
+        tuple[list[float64], list[int], list[float64]]:
+            - train_losses (list[float64]): List of training loss values for each epoch.
+            - test_epochs (list[int]): List of epochs at which the model was tested.
+            - test_losses (list[float64]): List of test loss values for each test epoch.
+            - test_accuracy (list[float64]): List of test accuracy values for each test
+                epoch.
+
+    """
+    if dataloader is None:
+        dataloader = BatchIterator()
+    if loss is None:
+        loss = CELoss()
+    if optimizer is None:
+        optimizer = SGD(learning_rate=lr)
+
+    test_dataloader = BatchIterator(batch_size=-1, shuffle=False)
+    test_batch = next(test_dataloader(test_inputs, test_targets))
+    train_losses: list[float64] = []
+    test_epochs: list[int] = []
+    test_losses: list[float64] = []
+    test_accuracies: list[float64] = []
+    for epoch in range(num_epochs):
+        epoch_loss = float64(0.0)
+        num_batches: int = 0
+        for batch in dataloader(train_inputs, train_targets):
+            num_batches += 1
+            pred = net.forward(batch.inputs)
+            batch_loss = loss.loss(pred, batch.targets)
+            epoch_loss += batch_loss
+            grad = loss.grad(pred, batch.targets)
+            net.backward(grad)
+            if max_gradient_norm is not None:
+                optimizer.clip_gradients(net, max_norm=max_gradient_norm)
+            optimizer.step(net)
+
+        epoch_loss /= num_batches
+
+        if epoch % test_interval == 0:
+            test_pred = net.forward(test_batch.inputs)
+            test_loss = loss.loss(test_pred, test_batch.targets)
+            test_accuracy = accuracy(test_pred, test_batch.targets)
+            test_epochs.append(epoch)
+            test_losses.append(test_loss)
+            test_accuracies.append(test_accuracy)
+
+        train_losses.append(epoch_loss)
+
+    if (num_epochs - 1) % test_interval != 0:
+        test_pred = net.forward(test_batch.inputs)
+        test_loss = loss.loss(test_pred, test_batch.targets)
+        test_accuracy = accuracy(test_pred, test_batch.targets)
+        test_epochs.append(num_epochs - 1)
+        test_losses.append(test_loss)
+        test_accuracies.append(test_accuracy)
+
+    return train_losses, test_epochs, test_losses, test_accuracies
