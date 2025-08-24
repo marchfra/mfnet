@@ -4,11 +4,14 @@ import pytest
 from mfnet.tensor import tensor
 from mfnet.trainutils import (
     Normalization,
+    accuracy,
     denormalize_features,
+    is_one_hot,
     normalize_features,
+    softmax,
     train_test_split,
 )
-from tests.conftest import InputsFactory, TargetsFactory
+from tests.conftest import TensorFactory
 
 
 def test_train_test_split_shapes() -> None:
@@ -61,12 +64,12 @@ def test_train_test_split_empty_input() -> None:
 
 @pytest.mark.parametrize("test_size", list(range(0, 101, 13)))
 def test_train_test_split_test_size(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    one_hot_factory: TensorFactory,
     test_size: int,
 ) -> None:
     x = inputs_factory(100, 4)
-    y = targets_factory(100, 2)
+    y = one_hot_factory(100, 2)
     x_train, y_train, x_test, y_test = train_test_split(x, y, test_size=test_size / 100)
     assert x_train.shape[0] == y_train.shape[0] == 100 - test_size
     assert x_test.shape[0] == y_test.shape[0] == test_size
@@ -156,11 +159,11 @@ def test_normalize_features_applies_correct_normalization() -> None:
 
 
 def test_normalize_features_different_number_of_samples(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    one_hot_factory: TensorFactory,
 ) -> None:
     x = inputs_factory(100, 4)
-    y = targets_factory(80, 2)
+    y = one_hot_factory(80, 2)
     with pytest.raises(
         ValueError,
         match="Input tensors must have the same number of samples.",
@@ -189,11 +192,11 @@ def test_normalize_features_zero_variance() -> None:
 
 
 def test_denormalize_features_applies_correct_denormalization(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    one_hot_factory: TensorFactory,
 ) -> None:
     x = inputs_factory(100, 4)
-    y = targets_factory(100, 2)
+    y = one_hot_factory(100, 2)
     x_norm, y_norm, norm = normalize_features(x, y)
     x_denorm, y_denorm = denormalize_features(x_norm, y_norm, norm)
 
@@ -202,11 +205,11 @@ def test_denormalize_features_applies_correct_denormalization(
 
 
 def test_denormalize_features_different_number_of_samples(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    one_hot_factory: TensorFactory,
 ) -> None:
     x = inputs_factory(100, 4)
-    y = targets_factory(80, 2)
+    y = one_hot_factory(80, 2)
     norm = Normalization(
         np.zeros(x.shape[1]),
         np.ones(x.shape[1]),
@@ -221,11 +224,11 @@ def test_denormalize_features_different_number_of_samples(
 
 
 def test_denormalize_features_incoherent_normalization(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    one_hot_factory: TensorFactory,
 ) -> None:
     x = inputs_factory(100, 4)
-    y = targets_factory(100, 2)
+    y = one_hot_factory(100, 2)
     norm = Normalization(
         np.zeros(x.shape[1] + 1),
         np.ones(x.shape[1] + 1),
@@ -240,11 +243,11 @@ def test_denormalize_features_incoherent_normalization(
 
 
 def test_denormalize_features_zero_variance(
-    inputs_factory: InputsFactory,
-    targets_factory: TargetsFactory,
+    inputs_factory: TensorFactory,
+    one_hot_factory: TensorFactory,
 ) -> None:
     x = inputs_factory(100, 4)
-    y = targets_factory(100, 2)
+    y = one_hot_factory(100, 2)
     norm = Normalization(
         np.zeros(x.shape[1]),
         np.zeros(x.shape[1]),
@@ -254,3 +257,173 @@ def test_denormalize_features_zero_variance(
 
     with pytest.raises(ValueError, match="feature 0 with zero variance."):
         denormalize_features(x, y, norm)
+
+
+def test_is_one_hot_valid() -> None:
+    tensor_ = tensor(
+        [
+            [1, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1],
+        ],
+    )
+    assert is_one_hot(tensor_) is True
+
+
+def test_is_one_hot_invalid_shape() -> None:
+    # Not 2D
+    tensor_ = tensor([1, 0, 0])
+    assert is_one_hot(tensor_) is False
+
+
+def test_is_one_hot_multiple_ones_in_column() -> None:
+    tensor_ = tensor(
+        [
+            [1, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 1],
+        ],
+    )
+    assert is_one_hot(tensor_) is False
+
+
+def test_is_one_hot_non_binary_values() -> None:
+    tensor_ = tensor(
+        [
+            [1, 0, 0, 0.5, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1],
+        ],
+    )
+    assert is_one_hot(tensor_) is False
+
+
+def test_is_one_hot_all_zeros_column() -> None:
+    tensor_ = tensor(
+        [
+            [1, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1],
+        ],
+    )
+    assert is_one_hot(tensor_) is False
+
+
+def test_is_one_hot_single_sample() -> None:
+    # Single sample, valid one-hot
+    tensor_ = tensor(
+        [
+            [1],
+            [0],
+        ],
+    )
+    assert is_one_hot(tensor_) is True
+
+
+def test_is_one_hot_empty_tensor() -> None:
+    tensor_ = tensor([[]])
+    assert is_one_hot(tensor_) is False
+
+
+def test_softmax_basic() -> None:
+    x = tensor(
+        [
+            [1, 5, 3],
+            [4, 3, 3],
+        ],
+    )
+    result = softmax(x)
+    expected = tensor(
+        [
+            [np.exp(-3) / (1 + np.exp(-3)), 1 / (1 + np.exp(-2)), 0.5],
+            [1 / (1 + np.exp(-3)), np.exp(-2) / (1 + np.exp(-2)), 0.5],
+        ],
+    )
+    np.testing.assert_array_almost_equal(result, expected)
+
+
+def test_softmax_numerical_stability() -> None:
+    x = tensor(
+        [
+            [10_000, 100_001],
+            [10_002, 100_003],
+            [10_004, 100_005],
+        ],
+    )
+    result = softmax(x)
+    assert np.allclose(np.sum(result, axis=0), np.ones(x.shape[1]))
+
+
+def test_softmax_sum_to_one() -> None:
+    x = tensor(
+        [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+            [10, 11, 12],
+        ],
+    )
+    result = softmax(x)
+    sums = np.sum(result, axis=0)
+    np.testing.assert_allclose(sums, np.ones(x.shape[1]), rtol=1e-6)
+
+
+def test_accuracy_perfect_match() -> None:
+    # 3 classes, 5 samples
+    pred = tensor(
+        [
+            [1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1],
+            [0, 1, 1, 1, 0],
+        ],
+    )
+    target = tensor(
+        [
+            [1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1],
+            [0, 1, 1, 1, 0],
+        ],
+    )
+    acc = accuracy(pred, target)
+    assert np.isclose(acc, 1.0)
+
+
+def test_accuracy_partial_match() -> None:
+    pred = tensor(
+        [
+            [1, 1, 1, 1, 1],
+            [1, 0, 0, 1, 1],
+            [0, 1, 1, 0, 0],
+        ],
+    )
+    target = tensor(
+        [
+            [1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 1],
+            [0, 1, 1, 1, 0],
+        ],
+    )
+    acc = accuracy(pred, target)
+    assert np.isclose(acc, 4 / 5)
+
+
+def test_accuracy_shape_mismatch_raises() -> None:
+    pred = tensor([[1, 0], [0, 1]])
+    target = tensor([[1, 0, 0], [0, 1, 0]])
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        accuracy(pred, target)
+
+
+def test_accuracy_target_not_one_hot_raises() -> None:
+    pred = tensor([[0, 1], [1, 0]])
+    target = tensor([[0, 1], [0.5, 0.5]])
+    with pytest.raises(ValueError, match="not one-hot encoded"):
+        accuracy(pred, target)

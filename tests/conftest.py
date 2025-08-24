@@ -12,11 +12,11 @@ def rng() -> Generator:
     return np.random.default_rng()
 
 
-type InputsFactory = Callable[[int, int], Tensor]
+type TensorFactory = Callable[[int, int], Tensor]
 
 
 @pytest.fixture
-def inputs_factory(rng: np.random.Generator) -> InputsFactory:
+def inputs_factory(rng: np.random.Generator) -> TensorFactory:
     def make_inputs(num_samples: int = 4, num_features: int = 2) -> Tensor:
         inputs = rng.standard_normal((num_samples, num_features))
         return inputs
@@ -24,11 +24,8 @@ def inputs_factory(rng: np.random.Generator) -> InputsFactory:
     return make_inputs
 
 
-type TargetsFactory = Callable[[int, int], Tensor]
-
-
 @pytest.fixture
-def targets_factory(rng: np.random.Generator) -> TargetsFactory:
+def targets_factory(rng: np.random.Generator) -> TensorFactory:
     def make_targets(num_samples: int = 4, num_features: int = 1) -> Tensor:
         targets = rng.standard_normal((num_samples, num_features)).reshape(
             -1,
@@ -37,3 +34,12 @@ def targets_factory(rng: np.random.Generator) -> TargetsFactory:
         return targets
 
     return make_targets
+
+
+@pytest.fixture
+def one_hot_factory(rng: np.random.Generator) -> TensorFactory:
+    def make_one_hot(num_samples: int = 4, num_classes: int = 3) -> Tensor:
+        labels = rng.integers(0, num_classes, size=(num_samples,))
+        return np.eye(num_classes)[labels].reshape(-1, num_classes)
+
+    return make_one_hot

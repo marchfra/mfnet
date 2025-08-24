@@ -165,3 +165,70 @@ def denormalize_features(
     y = y * norm.y_std + norm.y_mu
 
     return x, y
+
+
+def is_one_hot(tensor: Tensor) -> bool:
+    """Check if a tensor is one-hot encoded.
+
+    Args:
+        tensor (Tensor): The tensor to check.
+
+    Returns:
+        bool: True if the tensor is one-hot encoded, False otherwise.
+
+    """
+    # Check if the tensor is 2D
+    if tensor.ndim != 2:  # noqa: PLR2004
+        return False
+
+    # Empty tensor is not one-hot encoded
+    if not tensor.any():
+        return False
+
+    # Check if each column is a valid one-hot vector
+    return all(col.sum() == 1 and ((col == 0) | (col == 1)).all() for col in tensor.T)
+
+
+def softmax(x: Tensor) -> Tensor:
+    """Apply the softmax activation function to the input tensor.
+
+    The softmax function is defined as: s(x_i) = exp(x_i) / sum(exp(x_j)).
+
+    Args:
+        x (Tensor): Input tensor. Must have shape (num_classes, num_samples).
+
+    Returns:
+        Tensor: Output tensor with the softmax function applied element-wise.
+
+    """
+    # Use axis=0 because we want to compute the softmax for each column (i.e.,
+    # sample) independently
+    e_x = np.exp(x - np.max(x, axis=0, keepdims=True))  # For numerical stability
+    return e_x / np.sum(e_x, axis=0, keepdims=True)
+
+
+def accuracy(pred: Tensor, target: Tensor) -> np.float64:
+    """Compute the accuracy of predictions against the target.
+
+    Args:
+        pred (Tensor): Predicted output tensor. Has shape (num_classes + 1,
+            num_samples).
+        target (Tensor): Ground truth target tensor. Has shape (num_classes + 1,
+            num_samples).
+
+    Returns:
+        float: Accuracy.
+
+    """
+    if pred.shape != target.shape:
+        raise ValueError(f"Shape mismatch: {pred.shape} vs {target.shape}.")
+
+    target = target[1:]
+    pred = pred[1:]
+
+    if not is_one_hot(target):
+        raise ValueError("Target tensor is not one-hot encoded")
+
+    pred_classes = pred.argmax(axis=0)
+    target_classes = target.argmax(axis=0)
+    return (pred_classes == target_classes).mean(dtype=np.float64)
