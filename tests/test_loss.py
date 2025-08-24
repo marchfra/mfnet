@@ -3,6 +3,7 @@ import pytest
 
 from mfnet.loss import CELoss, MSELoss
 from mfnet.tensor import tensor
+from mfnet.trainutils import softmax
 
 # -- MSE Loss --
 
@@ -67,167 +68,192 @@ def test_mse_grad_shape_mismatch() -> None:
 # -- CE Loss --
 
 
-def test_ce_loss_perfect_prediction() -> None:
+def test_ce_loss_valid_one_hot() -> None:
     loss = CELoss()
-    # One-hot target, pred matches exactly
-    pred = tensor([[1, 0], [0, 1]])
-    target = tensor([[1, 0], [0, 1]])
-    # log(1) = 0, so loss should be 0
-    assert np.isclose(loss.loss(pred, target), 0.0)
-
-
-def test_ce_loss_imperfect_prediction() -> None:
-    loss = CELoss()
-    pred = tensor([[0.8, 0.2], [0.2, 0.8]])
-    target = tensor([[1, 0], [0, 1]])
-    # Only the correct class contributes, so:
-    # -log(0.8) for first sample, -log(0.8) for second sample, mean of both
-    expected = -(np.log(0.8) + np.log(0.8)) / 2
-    assert np.isclose(loss.loss(pred, target), expected)
+    # 3 classes, 2 samples
+    pred = tensor(
+        [
+            [1, 1],  # bias row, will be removed
+            [2.0, 1.0],
+            [1.0, 3.0],
+            [0.5, 0.2],
+        ],
+    )
+    target = tensor(
+        [
+            [1, 1],  # bias row, will be removed
+            [1, 0],
+            [0, 1],
+            [0, 0],
+        ],
+    )
+    # Compute expected manually
+    softmax_pred = softmax(pred[1:])
+    expected = -(target[1:] * np.log(softmax_pred)).sum(axis=1).mean()
+    np.testing.assert_allclose(loss.loss(pred, target), expected, rtol=1e-6)
 
 
 def test_ce_loss_shape_mismatch() -> None:
     loss = CELoss()
-    pred = tensor([[0.8, 0.2]])
-    target = tensor([[1, 0], [0, 1]])
+    pred = tensor(
+        [
+            [0.0, 0.0],
+            [2.0, 1.0],
+            [1.0, 3.0],
+        ],
+    )
+    target = tensor(
+        [
+            [0, 0],
+            [1, 0],
+        ],
+    )
     with pytest.raises(ValueError, match="Shape mismatch"):
         loss.loss(pred, target)
 
 
-def test_ce_loss_non_one_hot_target() -> None:
+def test_ce_loss_not_one_hot() -> None:
     loss = CELoss()
-    pred = tensor([[0.7, 0.3], [0.3, 0.7]])
-    target = tensor([[0.6, 0.4], [0.4, 0.6]])
-    with pytest.raises(ValueError, match="Target tensor is not one-hot encoded"):
+    pred = tensor(
+        [
+            [0.0, 0.0],
+            [2.0, 1.0],
+            [1.0, 3.0],
+        ],
+    )
+    target = tensor(
+        [
+            [0, 0],
+            [0.5, 0],
+            [0.5, 1],
+        ],
+    )
+    with pytest.raises(ValueError, match="one-hot"):
         loss.loss(pred, target)
 
 
-def test_ce_loss_incorrect_prediction() -> None:
+def test_ce_loss_zero_probabilities() -> None:
     loss = CELoss()
-    pred = tensor([[0, 1], [1, 0]])
-    target = tensor([[1, 0], [0, 1]])
-    # log(0) should be replaced with log(1e-100)
+    pred = tensor(
+        [
+            [0.0, 0.0],
+            [1000.0, -1000.0],
+            [-1000.0, 1000.0],
+        ],
+    )
+    target = tensor(
+        [
+            [0, 0],
+            [1, 0],
+            [0, 1],
+        ],
+    )
+    # Softmax will produce probabilities very close to 1 and 0
     result = loss.loss(pred, target)
-    assert np.isclose(result, -np.log(1e-100))
+    assert np.isfinite(result)
 
 
-def test_ce_grad_perfect_prediction() -> None:
+def test_ce_loss_single_sample() -> None:
     loss = CELoss()
-    pred = tensor([[1, 0], [0, 1]])
-    target = tensor([[1, 0], [0, 1]])
-    num_classes = target.shape[0]
-    expected = tensor([[-1 / num_classes, 0], [0, -1 / num_classes]])
-    grad = loss.grad(pred, target)
-    np.testing.assert_allclose(grad, expected, atol=1e-8)
-
-
-def test_ce_grad_imperfect_prediction() -> None:
-    loss = CELoss()
-    pred = tensor([[0.8, 0.2], [0.2, 0.8]])
-    target = tensor([[1, 0], [0, 1]])
-    num_classes = target.shape[0]
-    expected = tensor([[-1 / (0.8 * num_classes), 0], [0, -1 / (0.8 * num_classes)]])
-    grad = loss.grad(pred, target)
-    np.testing.assert_allclose(grad, expected, atol=1e-8)
-
-
-def test_ce_grad_shape_mismatch() -> None:
-    loss = CELoss()
-    pred = tensor([[0.8, 0.2]])
-    target = tensor([[1, 0], [0, 1]])
-    with pytest.raises(ValueError, match="Shape mismatch"):
-        loss.grad(pred, target)
-
-
-def test_ce_grad_non_one_hot_target() -> None:
-    loss = CELoss()
-    pred = tensor([[0.7, 0.3], [0.3, 0.7]])
-    target = tensor([[0.6, 0.4], [0.4, 0.6]])
-    with pytest.raises(ValueError, match="Target tensor is not one-hot encoded"):
-        loss.grad(pred, target)
-
-
-def test_ce_grad_incorrect_prediction() -> None:
-    loss = CELoss()
-    pred = tensor([[1e-100, 1], [1, 1e-100]])
-    target = tensor([[1, 0], [0, 1]])
-    num_classes = target.shape[0]
-    expected = tensor(
-        [[-1 / (1e-100 * num_classes), 0], [0, -1 / (1e-100 * num_classes)]],
-    )
-    grad = loss.grad(pred, target)
-    np.testing.assert_allclose(grad, expected, rtol=1e-5)
-
-
-def test_is_one_hot_valid() -> None:
-    tensor_ = tensor(
+    pred = tensor(
         [
-            [1, 0, 0, 1, 0],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1],
+            [0.0],
+            [2.0],
+            [1.0],
         ],
     )
-    assert CELoss.is_one_hot(tensor_) is True
-
-
-def test_is_one_hot_invalid_shape() -> None:
-    # Not 2D
-    tensor_ = tensor([1, 0, 0])
-    assert CELoss.is_one_hot(tensor_) is False
-
-
-def test_is_one_hot_multiple_ones_in_column() -> None:
-    tensor_ = tensor(
+    target = tensor(
         [
-            [1, 0, 0, 1, 0],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 1, 0],
-            [0, 0, 0, 0, 1],
-        ],
-    )
-    assert CELoss.is_one_hot(tensor_) is False
-
-
-def test_is_one_hot_non_binary_values() -> None:
-    tensor_ = tensor(
-        [
-            [1, 0, 0, 0.5, 0],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1],
-        ],
-    )
-    assert CELoss.is_one_hot(tensor_) is False
-
-
-def test_is_one_hot_all_zeros_column() -> None:
-    tensor_ = tensor(
-        [
-            [1, 0, 0, 0, 0],
-            [0, 1, 0, 0, 0],
-            [0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1],
-        ],
-    )
-    assert CELoss.is_one_hot(tensor_) is False
-
-
-def test_is_one_hot_single_sample() -> None:
-    # Single sample, valid one-hot
-    tensor_ = tensor(
-        [
+            [0],
             [1],
             [0],
         ],
     )
-    assert CELoss.is_one_hot(tensor_) is True
+    softmax_pred = softmax(pred[1:])
+    expected = -(target[1:] * np.log(softmax_pred)).sum(axis=1).mean()
+    np.testing.assert_allclose(loss.loss(pred, target), expected, rtol=1e-6)
 
 
-def test_is_one_hot_empty_tensor() -> None:
-    tensor_ = tensor([[]])
-    assert CELoss.is_one_hot(tensor_) is False
+def test_ce_grad_valid_one_hot() -> None:
+    loss = CELoss()
+    pred = tensor(
+        [
+            [1, 1],  # bias row, will be removed
+            [2.0, 1.0],
+            [1.0, 3.0],
+            [0.5, 0.2],
+        ],
+    )
+    target = tensor(
+        [
+            [1, 1],  # bias row, will be removed
+            [1, 0],
+            [0, 1],
+            [0, 0],
+        ],
+    )
+    softmax_pred = softmax(pred[1:])
+    expected_grad = softmax_pred - target[1:]
+    expected_grad = np.insert(expected_grad, 0, 0, axis=0)
+    np.testing.assert_allclose(loss.grad(pred, target), expected_grad, rtol=1e-6)
+
+
+def test_ce_grad_shape_mismatch() -> None:
+    loss = CELoss()
+    pred = tensor(
+        [
+            [0.0, 0.0],
+            [2.0, 1.0],
+            [1.0, 3.0],
+        ],
+    )
+    target = tensor(
+        [
+            [0, 0],
+            [1, 0],
+        ],
+    )
+    with pytest.raises(ValueError, match="Shape mismatch"):
+        loss.grad(pred, target)
+
+
+def test_ce_grad_not_one_hot() -> None:
+    loss = CELoss()
+    pred = tensor(
+        [
+            [0.0, 0.0],
+            [2.0, 1.0],
+            [1.0, 3.0],
+        ],
+    )
+    target = tensor(
+        [
+            [0, 0],
+            [0.5, 0],
+            [0.5, 1],
+        ],
+    )
+    with pytest.raises(ValueError, match="one-hot"):
+        loss.grad(pred, target)
+
+
+def test_ce_grad_single_sample() -> None:
+    loss = CELoss()
+    pred = tensor(
+        [
+            [0.0],
+            [2.0],
+            [1.0],
+        ],
+    )
+    target = tensor(
+        [
+            [0],
+            [1],
+            [0],
+        ],
+    )
+    softmax_pred = softmax(pred[1:])
+    expected_grad = softmax_pred - target[1:]
+    expected_grad = np.insert(expected_grad, 0, 0, axis=0)
+    np.testing.assert_allclose(loss.grad(pred, target), expected_grad, rtol=1e-6)

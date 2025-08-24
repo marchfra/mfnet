@@ -4,6 +4,7 @@ import numpy as np
 from numpy import float64
 
 from mfnet.tensor import Tensor
+from mfnet.trainutils import is_one_hot, softmax
 
 
 class Loss(ABC):
@@ -79,16 +80,24 @@ class CELoss(Loss):
 
     @staticmethod
     def loss(pred: Tensor, target: Tensor) -> float64:
-        """Compute the CE loss between predicted and target tensors.
+        """Compute the categorical CE loss between predicted and target tensors.
+
+        This function expects both `pred` and `target` tensors to have the same shape.
+        The target tensor must be one-hot encoded. The predicted tensor is passed
+        through a softmax function to obtain probabilities. To avoid numerical issues
+        with log(0), zero probabilities are replaced with a small value (1e-100). The
+        loss is calculated as the mean of the negative sum of the element-wise product
+        of the target and the logarithm of the predicted probabilities.
+
+        Note:
+        The `pred` tensor **must not** be the output of a softmax.
 
         Args:
-            pred (Tensor): The predicted tensor. Must have shape (num_classes,
-                num_samples).
-            target (Tensor): The ground truth tensor. Must have shape (num_classes,
-                num_samples). Should be a one-hot encoded tensor.
+            pred (Tensor): The predicted tensor, i.e., raw logits from the model.
+            target (Tensor): The ground truth tensor, expected to be one-hot encoded.
 
         Returns:
-            float64: The computed cross-entropy loss value.
+            float64: The mean categorical cross-entropy loss.
 
         Raises:
             ValueError: If the shapes of `pred` and `target` do not match.
@@ -96,66 +105,52 @@ class CELoss(Loss):
 
         """
         if pred.shape != target.shape:
-            raise ValueError("Shape mismatch")
+            raise ValueError(f"Shape mismatch: {pred.shape} vs {target.shape}.")
 
-        if not CELoss.is_one_hot(target):
+        target = target[1:]
+        pred = pred[1:]
+
+        if not is_one_hot(target):
             raise ValueError("Target tensor is not one-hot encoded")
 
-        # Prevent log(0) by replacing 0s with a small value
-        pred[np.where(pred == 0)] = 1e-100
+        # Compute the softmax of the predicted tensor
+        softmax_pred = softmax(pred)
 
-        return -(target * np.log(pred)).sum(axis=1, dtype=pred.dtype).mean()
+        # Prevent log(0) by replacing 0s with a small value
+        softmax_pred[np.where(softmax_pred == 0)] = 1e-100
+
+        return (
+            -(target * np.log(softmax_pred))
+            .sum(axis=1, dtype=softmax_pred.dtype)
+            .mean()
+        )
 
     @staticmethod
     def grad(pred: Tensor, target: Tensor) -> Tensor:
-        """Compute the gradient of the CE loss with respect to the predicted tensor.
+        """Compute the gradient of the CE loss with respect to the predictions.
 
         Args:
-            pred (Tensor): The predicted tensor. Must have shape (num_classes,
-                num_samples).
-            target (Tensor): The ground truth tensor. Must have shape (num_classes,
-                num_samples). Should be a one-hot encoded tensor.
+            pred (Tensor): The predicted logits. Must have the same shape as `target`.
+            target (Tensor): The ground truth one-hot encoded labels.
 
         Returns:
-            Tensor: The gradient of the cross-entropy loss with respect to the
-                predictions.
+            Tensor: The gradient tensor.
 
         Raises:
-            ValueError: If the target tensor is not one-hot encoded.
+            ValueError: If the shapes of `pred` and `target` do not match.
+            ValueError: If `target` is not one-hot encoded.
 
         """
         if pred.shape != target.shape:
-            raise ValueError("Shape mismatch")
+            raise ValueError(f"Shape mismatch: {pred.shape} vs {target.shape}.")
 
-        if not CELoss.is_one_hot(target):
+        target = target[1:]
+        pred = pred[1:]
+
+        if not is_one_hot(target):
             raise ValueError("Target tensor is not one-hot encoded")
 
-        # Prevent division by zero
-        pred[np.where(pred == 0)] = 1e-100
-
-        num_classes = target.shape[0]
-        return -target / pred / num_classes
-
-    @staticmethod
-    def is_one_hot(tensor: Tensor) -> bool:
-        """Check if a tensor is one-hot encoded.
-
-        Args:
-            tensor (Tensor): The tensor to check.
-
-        Returns:
-            bool: True if the tensor is one-hot encoded, False otherwise.
-
-        """
-        # Check if the tensor is 2D
-        if tensor.ndim != 2:  # noqa: PLR2004
-            return False
-
-        # Empty tensor is not one-hot encoded
-        if not tensor.any():
-            return False
-
-        # Check if each column is a valid one-hot vector
-        return all(
-            col.sum() == 1 and ((col == 0) | (col == 1)).all() for col in tensor.T
-        )
+        # Compute the gradient of the cross-entropy loss
+        softmax_pred = softmax(pred)
+        grad = softmax_pred - target
+        return np.insert(grad, 0, 0, axis=0)
