@@ -368,6 +368,14 @@ def test_softmax_sum_to_one() -> None:
     np.testing.assert_allclose(sums, np.ones(x.shape[1]), rtol=1e-6)
 
 
+def test_softmax_same_maximum(tensor_factory: TensorFactory) -> None:
+    x = tensor_factory(13, 100)
+    x_argmax = x.argmax(axis=0, keepdims=True)
+    result = softmax(x)
+    result_argmax = result.argmax(axis=0, keepdims=True)
+    np.testing.assert_array_equal(x_argmax, result_argmax)
+
+
 def test_accuracy_perfect_match() -> None:
     # 3 classes, 5 samples
     pred = tensor(
