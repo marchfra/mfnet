@@ -64,12 +64,11 @@ def test_train_test_split_empty_input() -> None:
 
 @pytest.mark.parametrize("test_size", list(range(0, 101, 13)))
 def test_train_test_split_test_size(
-    inputs_factory: TensorFactory,
-    one_hot_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     test_size: int,
 ) -> None:
-    x = inputs_factory(100, 4)
-    y = one_hot_factory(100, 2)
+    x = tensor_factory(100, 4)
+    y = tensor_factory(100, 2)
     x_train, y_train, x_test, y_test = train_test_split(x, y, test_size=test_size / 100)
     assert x_train.shape[0] == y_train.shape[0] == 100 - test_size
     assert x_test.shape[0] == y_test.shape[0] == test_size
@@ -159,11 +158,10 @@ def test_normalize_features_applies_correct_normalization() -> None:
 
 
 def test_normalize_features_different_number_of_samples(
-    inputs_factory: TensorFactory,
-    one_hot_factory: TensorFactory,
+    tensor_factory: TensorFactory,
 ) -> None:
-    x = inputs_factory(100, 4)
-    y = one_hot_factory(80, 2)
+    x = tensor_factory(100, 4)
+    y = tensor_factory(80, 2)
     with pytest.raises(
         ValueError,
         match="Input tensors must have the same number of samples.",
@@ -192,11 +190,10 @@ def test_normalize_features_zero_variance() -> None:
 
 
 def test_denormalize_features_applies_correct_denormalization(
-    inputs_factory: TensorFactory,
-    one_hot_factory: TensorFactory,
+    tensor_factory: TensorFactory,
 ) -> None:
-    x = inputs_factory(100, 4)
-    y = one_hot_factory(100, 2)
+    x = tensor_factory(100, 4)
+    y = tensor_factory(100, 2)
     x_norm, y_norm, norm = normalize_features(x, y)
     x_denorm, y_denorm = denormalize_features(x_norm, y_norm, norm)
 
@@ -205,11 +202,10 @@ def test_denormalize_features_applies_correct_denormalization(
 
 
 def test_denormalize_features_different_number_of_samples(
-    inputs_factory: TensorFactory,
-    one_hot_factory: TensorFactory,
+    tensor_factory: TensorFactory,
 ) -> None:
-    x = inputs_factory(100, 4)
-    y = one_hot_factory(80, 2)
+    x = tensor_factory(100, 4)
+    y = tensor_factory(80, 2)
     norm = Normalization(
         np.zeros(x.shape[1]),
         np.ones(x.shape[1]),
@@ -224,11 +220,10 @@ def test_denormalize_features_different_number_of_samples(
 
 
 def test_denormalize_features_incoherent_normalization(
-    inputs_factory: TensorFactory,
-    one_hot_factory: TensorFactory,
+    tensor_factory: TensorFactory,
 ) -> None:
-    x = inputs_factory(100, 4)
-    y = one_hot_factory(100, 2)
+    x = tensor_factory(100, 4)
+    y = tensor_factory(100, 2)
     norm = Normalization(
         np.zeros(x.shape[1] + 1),
         np.ones(x.shape[1] + 1),
@@ -242,12 +237,9 @@ def test_denormalize_features_incoherent_normalization(
         denormalize_features(x, y, norm)
 
 
-def test_denormalize_features_zero_variance(
-    inputs_factory: TensorFactory,
-    one_hot_factory: TensorFactory,
-) -> None:
-    x = inputs_factory(100, 4)
-    y = one_hot_factory(100, 2)
+def test_denormalize_features_zero_variance(tensor_factory: TensorFactory) -> None:
+    x = tensor_factory(100, 4)
+    y = tensor_factory(100, 2)
     norm = Normalization(
         np.zeros(x.shape[1]),
         np.zeros(x.shape[1]),

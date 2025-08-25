@@ -111,7 +111,7 @@ def test_train_returns_empty_list_for_zero_epochs() -> None:
 
 
 def test_train_clip_gradients_calls_clip_gradients(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -127,7 +127,7 @@ def test_train_clip_gradients_calls_clip_gradients(
     )
     optimizer = DummyOptimizer()
     net = DummyModel()
-    inputs = inputs_factory(10, 2)
+    inputs = tensor_factory(10, 2)
     targets = one_hot_factory(10, 2)
     train(
         net=net,
@@ -141,11 +141,11 @@ def test_train_clip_gradients_calls_clip_gradients(
 
 
 def test_train_test_regression_basic_flow(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel()
-    inputs = inputs_factory(7, 1)
+    inputs = tensor_factory(7, 1)
     targets = one_hot_factory(7, 1)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -177,11 +177,11 @@ def test_train_test_regression_basic_flow(
 
 
 def test_train_test_regression_defaults_are_used(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel()
-    inputs = inputs_factory(7, 1)
+    inputs = tensor_factory(7, 1)
     targets = one_hot_factory(7, 1)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -202,11 +202,11 @@ def test_train_test_regression_defaults_are_used(
 
 
 def test_train_test_regression_loss_decreases_for_simple_case(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel([Linear(1, 1)])
-    inputs = inputs_factory(13, 1)
+    inputs = tensor_factory(13, 1)
     targets = one_hot_factory(13, 1)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -226,11 +226,11 @@ def test_train_test_regression_loss_decreases_for_simple_case(
 
 
 def test_train_test_regression_returns_empty_list_for_zero_epochs(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel()
-    inputs = inputs_factory(13, 1)
+    inputs = tensor_factory(13, 1)
     targets = one_hot_factory(13, 1)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -250,7 +250,7 @@ def test_train_test_regression_returns_empty_list_for_zero_epochs(
 
 
 def test_train_test_regression_clip_gradients_calls_clip_gradients(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -266,7 +266,7 @@ def test_train_test_regression_clip_gradients_calls_clip_gradients(
     )
     optimizer = DummyOptimizer()
     net = DummyModel()
-    inputs = inputs_factory(10, 2)
+    inputs = tensor_factory(10, 2)
     targets = one_hot_factory(10, 2)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -287,11 +287,11 @@ def test_train_test_regression_clip_gradients_calls_clip_gradients(
 
 
 def test_train_test_classification_basic_flow(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel([Linear(5, 3)])
-    inputs = inputs_factory(7, 5)
+    inputs = tensor_factory(7, 5)
     targets = one_hot_factory(7, 3)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -326,11 +326,11 @@ def test_train_test_classification_basic_flow(
 
 
 def test_train_test_classification_defaults_are_used(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel([Linear(3, 5)])
-    inputs = inputs_factory(7, 3)
+    inputs = tensor_factory(7, 3)
     targets = one_hot_factory(7, 5)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -351,11 +351,11 @@ def test_train_test_classification_defaults_are_used(
 
 
 def test_train_test_classification_loss_decreases_for_simple_case(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel([Linear(5, 3)])
-    inputs = inputs_factory(13, 5)
+    inputs = tensor_factory(13, 5)
     targets = one_hot_factory(13, 3)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -375,11 +375,11 @@ def test_train_test_classification_loss_decreases_for_simple_case(
 
 
 def test_train_test_classification_returns_empty_list_for_zero_epochs(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel([Linear(2, 3)])
-    inputs = inputs_factory(13, 2)
+    inputs = tensor_factory(13, 2)
     targets = one_hot_factory(13, 3)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -399,7 +399,7 @@ def test_train_test_classification_returns_empty_list_for_zero_epochs(
 
 
 def test_train_test_classification_clip_gradients_calls_clip_gradients(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -415,7 +415,7 @@ def test_train_test_classification_clip_gradients_calls_clip_gradients(
     )
     optimizer = DummyOptimizer()
     net = DummyModel([Linear(2, 2)])
-    inputs = inputs_factory(10, 2)
+    inputs = tensor_factory(10, 2)
     targets = one_hot_factory(10, 2)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
@@ -437,7 +437,7 @@ def test_train_test_classification_clip_gradients_calls_clip_gradients(
 
 # @pytest.mark.skip(reason="Rewriting CELoss")
 def test_train_test_accuracy_increases(
-    inputs_factory: TensorFactory,
+    tensor_factory: TensorFactory,
     one_hot_factory: TensorFactory,
 ) -> None:
     net = DummyModel(
@@ -451,7 +451,7 @@ def test_train_test_accuracy_increases(
             Linear(16, 3),
         ],
     )
-    inputs = inputs_factory(10000, 5)
+    inputs = tensor_factory(10000, 5)
     targets = one_hot_factory(10000, 3)
     x_train, y_train, x_test, y_test = train_test_split(
         inputs,
