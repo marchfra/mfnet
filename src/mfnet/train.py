@@ -23,8 +23,8 @@ def train(  # noqa: PLR0913
 
     Args:
         net (NeuralNetwork): The neural network model to be trained.
-        inputs (Tensor): Input data for training.
-        targets (Tensor): Target labels for training.
+        inputs (Tensor): Input data for training. Shape (num_samples, num_features).
+        targets (Tensor): Target labels for training. Shape (num_samples, num_outputs).
         num_epochs (int, optional): Number of training epochs. Defaults to 1000.
         lr (float, optional): Learning rate for the optimizer. Defaults to 1e-3.
         dataloader (DataLoader, optional): DataLoader for batching inputs and targets.
@@ -81,10 +81,13 @@ def train_test_regression(  # noqa: PLR0913
 
     Args:
         net (NeuralNetwork): The neural network model to be trained.
-        train_inputs (Tensor): Input data for training.
-        train_targets (Tensor): Target labels for training.
-        test_inputs (Tensor): Input data for testing.
-        test_targets (Tensor): Target labels for testing.
+        train_inputs (Tensor): Input data for training. Shape (num_samples,
+            num_features).
+        train_targets (Tensor): Target labels for training. Shape (num_samples,
+            num_outputs).
+        test_inputs (Tensor): Input data for testing. Shape (num_samples, num_features).
+        test_targets (Tensor): Target labels for testing. Shape (num_samples,
+            num_outputs).
         num_epochs (int, optional): Number of training epochs. Defaults to 1000.
         test_interval (int, optional): Interval for testing the model. Defaults to 100.
         lr (float, optional): Learning rate for the optimizer. Defaults to 1e-3.
@@ -166,10 +169,13 @@ def train_test_classification(  # noqa: PLR0913
 
     Args:
         net (NeuralNetwork): The neural network model to be trained.
-        train_inputs (Tensor): Input data for training.
-        train_targets (Tensor): Target labels for training.
-        test_inputs (Tensor): Input data for testing.
-        test_targets (Tensor): Target labels for testing.
+        train_inputs (Tensor): Input data for training. Shape (num_samples,
+            num_features).
+        train_targets (Tensor): Target labels for training. Shape (num_samples,
+            num_outputs).
+        test_inputs (Tensor): Input data for testing. Shape (num_samples, num_features).
+        test_targets (Tensor): Target labels for testing. Shape (num_samples,
+            num_outputs).
         num_epochs (int, optional): Number of training epochs. Defaults to 1000.
         test_interval (int, optional): Interval for testing the model. Defaults to 100.
         lr (float, optional): Learning rate for the optimizer. Defaults to 1e-3.
