@@ -190,6 +190,28 @@ def one_hot_encode(x: Tensor, num_classes: int) -> Tensor:
     return np.eye(num_classes)[x_int]
 
 
+def one_hot_decode(x: Tensor) -> Tensor:
+    """Convert one-hot encoded vectors back to class indices.
+
+    Args:
+        x (Tensor): One-hot encoded tensor of shape (num_samples, num_classes).
+
+    Returns:
+        Tensor: Tensor of class indices of shape (num_samples,).
+
+    Raises:
+        ValueError: If the input tensor is not one-hot encoded.
+
+    Note:
+        The returned class indices are one-based (i.e., start from 1).
+
+    """
+    if not is_one_hot(x):
+        raise ValueError("Input tensor must be one-hot encoded.")
+
+    return x.argmax(axis=1) + 1  # Shift back to one-based indexing
+
+
 def is_one_hot(tensor: Tensor) -> bool:
     """Check if a tensor is one-hot encoded.
 

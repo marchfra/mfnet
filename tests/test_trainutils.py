@@ -8,6 +8,7 @@ from mfnet.trainutils import (
     denormalize_features,
     is_one_hot,
     normalize_features,
+    one_hot_decode,
     one_hot_encode,
     softmax,
     train_test_split,
@@ -471,3 +472,58 @@ def test_one_hot_encode_single_sample() -> None:
     result = one_hot_encode(x, 3)
     expected = tensor([0, 1, 0])
     np.testing.assert_array_equal(result, expected)
+
+
+def test_one_hot_decode_basic() -> None:
+    x = tensor(
+        [
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0],
+        ],
+    )
+    result = one_hot_decode(x)
+    expected = tensor([1, 3, 2])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_one_hot_decode_single_sample() -> None:
+    x = tensor([[0, 1, 0]])
+    with pytest.raises(ValueError, match="must be one-hot encoded"):
+        one_hot_decode(x)
+
+
+def test_one_hot_decode_multiple_samples() -> None:
+    x = tensor(
+        [
+            [0, 1, 0, 0],
+            [1, 0, 0, 0],
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+        ],
+    )
+    result = one_hot_decode(x)
+    expected = tensor([2, 1, 3, 4])
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_one_hot_decode_non_one_hot_vectors() -> None:
+    x = tensor(
+        [
+            [0.2, 0.5, 0.3],
+            [0.1, 0.7, 0.2],
+        ],
+    )
+    with pytest.raises(ValueError, match="must be one-hot encoded"):
+        one_hot_decode(x)
+
+
+def test_one_hot_decode_all_zeros() -> None:
+    x = tensor(
+        [
+            [0, 0, 0],
+            [0, 0, 0],
+        ],
+    )
+    with pytest.raises(ValueError, match="must be one-hot encoded"):
+        one_hot_decode(x)
