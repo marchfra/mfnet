@@ -489,21 +489,23 @@ def test_one_hot_decode_basic() -> None:
 
 def test_one_hot_decode_single_sample() -> None:
     x = tensor([[0, 1, 0]])
-    with pytest.raises(ValueError, match="must be one-hot encoded"):
-        one_hot_decode(x)
+    result = one_hot_decode(x)
+    expected = tensor([2])
+    np.testing.assert_array_equal(result, expected)
 
 
 def test_one_hot_decode_multiple_samples() -> None:
     x = tensor(
         [
-            [0, 1, 0, 0],
-            [1, 0, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1],
+            [0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0],
+            [0, 0, 0, 1, 0],
+            [1, 0, 0, 0, 0],
         ],
     )
     result = one_hot_decode(x)
-    expected = tensor([2, 1, 3, 4])
+    expected = tensor([5, 1, 3, 4, 1])
     np.testing.assert_array_equal(result, expected)
 
 

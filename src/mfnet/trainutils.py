@@ -206,7 +206,7 @@ def one_hot_decode(x: Tensor) -> Tensor:
         The returned class indices are one-based (i.e., start from 1).
 
     """
-    if not is_one_hot(x):
+    if not is_one_hot(x.T):
         raise ValueError("Input tensor must be one-hot encoded.")
 
     return x.argmax(axis=1) + 1  # Shift back to one-based indexing
