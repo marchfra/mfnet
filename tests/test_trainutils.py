@@ -8,6 +8,7 @@ from mfnet.trainutils import (
     denormalize_features,
     is_one_hot,
     normalize_features,
+    one_hot_encode,
     softmax,
     train_test_split,
 )
@@ -427,3 +428,46 @@ def test_accuracy_target_not_one_hot_raises() -> None:
     target = tensor([[0, 1], [0.5, 0.5]])
     with pytest.raises(ValueError, match="not one-hot encoded"):
         accuracy(pred, target)
+
+
+def test_one_hot_encode_basic() -> None:
+    x = tensor([1, 3, 2])
+    result = one_hot_encode(x, 3)
+    expected = tensor(
+        [
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, 1, 0],
+        ],
+    )
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_one_hot_encode_invalid_indices_raises() -> None:
+    num_classes = 3
+    x = tensor([0, 2, 3])  # 0 is invalid
+    with pytest.raises(ValueError, match="invalid class indices"):
+        one_hot_encode(x, num_classes)
+    x = tensor([1, 2, 4])  # 4 is invalid
+    with pytest.raises(ValueError, match="invalid class indices"):
+        one_hot_encode(x, num_classes)
+
+
+def test_one_hot_encode_non_integer_raises() -> None:
+    x = tensor([1.0, 2.5, 3.0])
+    with pytest.raises(ValueError, match="integer class indices"):
+        one_hot_encode(x, 3)
+
+
+def test_one_hot_encode_squeezes_input() -> None:
+    x = tensor([[1], [2], [3]])
+    result = one_hot_encode(x, 3)
+    expected = np.eye(3)[[0, 1, 2]]
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_one_hot_encode_single_sample() -> None:
+    x = tensor([[2]])
+    result = one_hot_encode(x, 3)
+    expected = tensor([0, 1, 0])
+    np.testing.assert_array_equal(result, expected)

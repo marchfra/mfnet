@@ -167,11 +167,34 @@ def denormalize_features(
     return x, y
 
 
+def one_hot_encode(x: Tensor, num_classes: int) -> Tensor:
+    """Convert class indices to one-hot encoded vectors.
+
+    Args:
+        x (Tensor): Input tensor of shape (num_samples,). Entries must be integers in
+            the range [1, num_classes].
+        num_classes (int): Number of classes for one-hot encoding.
+
+    Returns:
+        Tensor: One-hot encoded tensor of shape (num_samples, num_classes).
+
+    """
+    x = x.squeeze() - 1  # Shift to zero-based indexing
+    x_int = x.astype(int)
+    if np.any(x - x_int != 0):
+        raise ValueError("Input tensor must contain integer class indices.")
+
+    if x_int.min() < 0 or x_int.max() >= num_classes:
+        raise ValueError("Input tensor contains invalid class indices.")
+
+    return np.eye(num_classes)[x_int]
+
+
 def is_one_hot(tensor: Tensor) -> bool:
     """Check if a tensor is one-hot encoded.
 
     Args:
-        tensor (Tensor): The tensor to check.
+        tensor (Tensor): The tensor of shape (num_classes, num_samples) to check.
 
     Returns:
         bool: True if the tensor is one-hot encoded, False otherwise.
