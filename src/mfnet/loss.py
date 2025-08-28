@@ -123,7 +123,7 @@ class CELoss(Loss):
 
         return (
             -(target * np.log(softmax_pred))
-            .sum(axis=1, dtype=softmax_pred.dtype)
+            .sum(axis=0, dtype=softmax_pred.dtype)
             .mean()
         )
 
@@ -149,10 +149,12 @@ class CELoss(Loss):
         target = target[1:]
         pred = pred[1:]
 
+        num_samples = target.shape[1]
+
         if not is_one_hot(target):
             raise ValueError("Target tensor is not one-hot encoded")
 
         # Compute the gradient of the cross-entropy loss
         softmax_pred = softmax(pred)
-        grad = softmax_pred - target
+        grad = softmax_pred - target / num_samples
         return np.insert(grad, 0, 0, axis=0)

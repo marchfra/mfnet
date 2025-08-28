@@ -88,7 +88,7 @@ def test_ce_loss_valid_one_hot() -> None:
     )
     # Compute expected manually
     softmax_pred = softmax(pred[1:])
-    expected = -(target[1:] * np.log(softmax_pred)).sum(axis=1).mean()
+    expected = -(target[1:] * np.log(softmax_pred)).sum(axis=0).mean()
     np.testing.assert_allclose(loss.loss(pred, target), expected, rtol=1e-6)
 
 
@@ -169,7 +169,7 @@ def test_ce_loss_single_sample() -> None:
         ],
     )
     softmax_pred = softmax(pred[1:])
-    expected = -(target[1:] * np.log(softmax_pred)).sum(axis=1).mean()
+    expected = -(target[1:] * np.log(softmax_pred)).sum(axis=0).mean()
     np.testing.assert_allclose(loss.loss(pred, target), expected, rtol=1e-6)
 
 
@@ -192,7 +192,7 @@ def test_ce_grad_valid_one_hot() -> None:
         ],
     )
     softmax_pred = softmax(pred[1:])
-    expected_grad = softmax_pred - target[1:]
+    expected_grad = softmax_pred - target[1:] / target.shape[1]
     expected_grad = np.insert(expected_grad, 0, 0, axis=0)
     np.testing.assert_allclose(loss.grad(pred, target), expected_grad, rtol=1e-6)
 
