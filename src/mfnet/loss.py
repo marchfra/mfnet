@@ -50,7 +50,7 @@ class MSELoss(Loss):
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
-        return ((pred - target) ** 2).mean(axis=1, dtype=target.dtype).sum()
+        return ((pred - target) ** 2).sum(axis=0).mean(dtype=target.dtype)
 
     @staticmethod
     def grad(pred: Tensor, target: Tensor) -> Tensor:
@@ -72,7 +72,9 @@ class MSELoss(Loss):
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
-        return 2 * (pred - target) / target.shape[1]
+        num_samples = target.shape[1]
+
+        return 2 * (pred - target) / num_samples
 
 
 class CELoss(Loss):

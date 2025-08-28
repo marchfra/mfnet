@@ -27,7 +27,6 @@ def test_mse_loss_big_tensor() -> None:
     loss = MSELoss()
     pred = tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
     target = tensor([[0, 2, 3], [6, 5, 6], [7, 8, 9], [10, 11, 12]])
-    print(((pred - target) ** 2).mean(axis=1).sum())
     np.testing.assert_array_almost_equal(loss.loss(pred, target), float(5 / 3))
 
 
