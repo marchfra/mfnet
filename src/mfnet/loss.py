@@ -156,5 +156,5 @@ class CELoss(Loss):
 
         # Compute the gradient of the cross-entropy loss
         softmax_pred = softmax(pred)
-        grad = softmax_pred - target / num_samples
+        grad = (softmax_pred - target) / num_samples
         return np.insert(grad, 0, 0, axis=0)
