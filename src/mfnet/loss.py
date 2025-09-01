@@ -50,6 +50,9 @@ class MSELoss(Loss):
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
+        target = target[1:]
+        pred = pred[1:]
+
         return ((pred - target) ** 2).sum(axis=0).mean(dtype=target.dtype)
 
     @staticmethod
@@ -72,9 +75,14 @@ class MSELoss(Loss):
         if pred.shape != target.shape:
             raise ValueError("Shape mismatch")
 
+        target = target[1:]
+        pred = pred[1:]
+
         num_samples = target.shape[1]
 
-        return 2 * (pred - target) / num_samples
+        grad = 2 * (pred - target) / num_samples
+
+        return np.insert(grad, 0, 0, axis=0)
 
 
 class CELoss(Loss):
